@@ -37,7 +37,7 @@ namespace BankAPI.Models
 
       
         [ForeignKey("AccountId")]
-        public string AcccountId { get; set; }
+        public long AccountId { get; set; }
 
         public Account Account { get; set; }
     }

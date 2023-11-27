@@ -4,11 +4,11 @@
     {
         public long Id { get; set; }
 
-        public string Type { get; set; }
+        public TransactionType Type { get; set; }
 
         public DateTime TransactionDate { get; set; }
 
-        public string Status { get; set; }
+        public TransactionStatus Status { get; set; }
 
         public long PayeeId { get; set; }
 

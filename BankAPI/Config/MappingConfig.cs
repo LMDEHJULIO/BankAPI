@@ -11,6 +11,12 @@ namespace BankAPI.Config
             //CreateMap<CustomerDTO, Customer>();
 
             CreateMap<Address, AddressDTO>();
+
+            CreateMap<Bill, BillDTO>();
+            CreateMap<BillDTO, Bill>();
+
+            CreateMap<Deposit, DepositDTO>();
+            CreateMap<DepositDTO, Deposit>();
             //CreateMap<AddressDTO, Address>();
         }
     }

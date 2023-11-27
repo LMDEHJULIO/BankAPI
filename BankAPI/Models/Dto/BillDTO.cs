@@ -7,7 +7,7 @@ namespace BankAPI.Models.Dto
       
             public int Id { get; set; }
 
-            public string Status { get; set; }
+            public Status Status { get; set; }
 
             public string Payee { get; set; }
 
@@ -17,13 +17,13 @@ namespace BankAPI.Models.Dto
 
             public string PaymentDate { get; set; }
 
-            public BigInteger RecurringDate { get; set; }
+            public int RecurringDate { get; set; }
 
             public string UpcomingPaymentDate { get; set; }
 
             public double PaymentAmount { get; set; }
 
-            public string AcccountId { get; set; }
+            public long AccountId { get; set; }
         }
     
 }

@@ -10,12 +10,12 @@ namespace BankAPI.Models
         public long Id  { get; set; }
 
         [Required]
-        public string Type { get; set; }
-
+        public TransactionType Type { get; set; }
+         
         public DateTime TransactionDate { get; set; }
 
         [Required]
-        public string Status { get; set; }
+        public TransactionStatus Status { get; set; }
 
         [ForeignKey("AccountId")]
         public long PayeeId { get; set; }
