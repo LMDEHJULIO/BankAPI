@@ -1,10 +1,12 @@
 ﻿using BankAPI.Data;
 using BankAPI.Models;
 using BankAPI.Models.Dto;
+using BankAPI.Repository.IRepository;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
 
 namespace BankAPI.Controllers
 {
@@ -12,30 +14,32 @@ namespace BankAPI.Controllers
     [ApiController]
     public class AccountController : ControllerBase
     {
-        private readonly ApplicationDbContext _db;
+        private readonly IAccountRepository _db;
+        private readonly ICustomerRepository _customerDb;
 
-        public AccountController(ApplicationDbContext db)
+        public AccountController(IAccountRepository db, ICustomerRepository customerDb)
         {
             _db = db;
+            _customerDb = customerDb;
         }
 
         [HttpGet]
-        public ICollection<Account> GetAccounts()
+        public IEnumerable<Account> GetAccounts()
         {
-            return _db.Accounts.Include(a => a.Customer).ThenInclude(c => c.Address).ToList(); 
+            return _db.GetAll(); 
         }
 
         [HttpGet("customers/{customerId}/accounts")]
         public ActionResult<ICollection<Account>> GetAccounts(int customerId)
         {
-            var customerValid = _db.Customers.Any(c => c.Id == customerId);
+            var customerValid = _customerDb.Any(c => c.Id == customerId);
 
             if(!customerValid)
             {
                 return NotFound();
             }
 
-            var accounts = _db.Accounts.Where(a => a.CustomerId == customerId).Include(a => a.Customer).ThenInclude(c => c.Address).ToList(); 
+            var accounts = _db.Include(a => a.Customer).Where(a => a.CustomerId == customerId).ToList();
 
             return Ok(accounts);
         }
@@ -58,18 +62,18 @@ namespace BankAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
 
-            var customer = _db.Customers.FirstOrDefault(c => c.Id == customerId);
+            var customer = _db.Any(c => c.Id == customerId);
 
-            if(customer == null)
+            if(customer == false)
             {
                 return NotFound("Customer not Found");
             }
 
             account.CustomerId = customerId;
 
-            _db.Accounts.Add(account);
+            _db.Create(account);
 
-            _db.SaveChanges();
+            _db.Save();
 
             return CreatedAtRoute("GetCustomer", new { id = account.Id }, account);
         }
@@ -83,7 +87,7 @@ namespace BankAPI.Controllers
                 return BadRequest();
             }
 
-            var account = _db.Accounts.FirstOrDefault(a => a.Id == id);
+            var account = _db.Get(id);
 
             if (account == null) 
             {
@@ -95,9 +99,9 @@ namespace BankAPI.Controllers
             account.Balance = accountEdit.Balance;
             account.NickName = accountEdit.NickName;
 
-            _db.Accounts.Update(account);
+            _db.Update(account);
 
-            _db.SaveChanges();
+            _db.Save();
 
             return NoContent();
         }
@@ -106,16 +110,16 @@ namespace BankAPI.Controllers
         [HttpDelete("{id}")]
         public IActionResult DeleteAccount(long id)
         {
-            var account = _db.Accounts.FirstOrDefault(a =>a.Id == id);
+            var account = _db.Get(id);
 
             if (account == null)
             {
                 return NotFound();
             }
 
-            _db.Accounts.Remove(account);
+            _db.Remove(account);
 
-            _db.SaveChanges();
+            _db.Save();
 
             return NoContent();
         }

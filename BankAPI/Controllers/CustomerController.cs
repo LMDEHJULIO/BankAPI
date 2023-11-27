@@ -2,6 +2,8 @@
 using BankAPI.Data;
 using BankAPI.Models;
 using BankAPI.Models.Dto;
+using BankAPI.Repository;
+using BankAPI.Repository.IRepository;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,26 +16,39 @@ namespace BankAPI.Controller
     [ApiController]
     public class CustomerController : ControllerBase
     {
-        private readonly ApplicationDbContext _db;
+
+        protected APIResponse _response; 
+
+        private readonly ICustomerRepository _db;
 
         private readonly IMapper _mapper; 
 
-        public CustomerController(ApplicationDbContext db, IMapper mapper) {
+        public CustomerController(ICustomerRepository db, IMapper mapper) {
             _db = db; 
             _mapper = mapper;
+            this._response = new();
         }
 
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult<IEnumerable<CustomerDTO>> GetCustomers() {
+        public ActionResult<APIResponse> GetCustomers() {
 
-            IEnumerable<Customer> customers = _db.Customers
-            .Include(c => c.Address) // Include the Addresses collection
-            .ToList();
+            try
+            {
+                IEnumerable<Customer> customers = _db.GetAll(c => c.Address);
 
+                _response.Result = _mapper.Map<List<CustomerDTO>>(customers);
+                _response.IsSuccess = true;
+                _response.StatusCode = System.Net.HttpStatusCode.OK;
 
-            return Ok(_mapper.Map<List<CustomerDTO>>(customers));
+                return Ok(_response);
+            } catch (Exception ex) {
+                _response.IsSuccess = false;
+                _response.ErrorMessages = new List<string>() { ex.ToString() };
+            }
+
+            return _response;
 
         }
 
@@ -45,7 +60,7 @@ namespace BankAPI.Controller
             if (id == 0) {
                 return BadRequest();
             }
-            var customer = _db.Customers.Include(c => c.Address).ToList().FirstOrDefault(u => u.Id == id);
+            var customer = _db.Get(id, c => c.Address);
 
             if (customer == null)
             {
@@ -72,9 +87,9 @@ namespace BankAPI.Controller
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
 
-            _db.Customers.Add(customer);
+            _db.Create(customer);
 
-            _db.SaveChanges();
+            _db.Save();
 
             return CreatedAtRoute("GetCustomer", new { id = customer.Id }, customer);
         }
@@ -88,16 +103,16 @@ namespace BankAPI.Controller
                 return BadRequest();
             }
 
-            var customer = _db.Customers.FirstOrDefault(u => u.Id == id);
+            var customer = _db.Get(id);
 
             if (customer == null)
             {
                 return NotFound();
             }
 
-            _db.Customers.Remove(customer);
+            _db.Remove(customer);
 
-            _db.SaveChanges();
+            _db.Save();
 
             return NoContent();
         }
@@ -109,15 +124,15 @@ namespace BankAPI.Controller
                 return BadRequest();
             }
 
-            var editCustomer = _db.Customers.FirstOrDefault(u => u.Id == id);
+            var editCustomer = _db.Get(id);
 
             editCustomer.FirstName = customer.FirstName;
             editCustomer.LastName = customer.LastName;
             //editCustomer.Address = customer.Address;
 
-            _db.Customers.Update(editCustomer);
+            _db.Update(editCustomer);
 
-            _db.SaveChanges();
+            _db.Save();
 
             return NoContent();
         }

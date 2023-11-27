@@ -2,5 +2,6 @@
 {
     public class DepositDTO : TransactionDTO
     {
+        public long PayeeId { get; set; }
     }
 }

@@ -17,9 +17,6 @@ namespace BankAPI.Models
         [Required]
         public TransactionStatus Status { get; set; }
 
-        [ForeignKey("AccountId")]
-        public long PayeeId { get; set; }
-
         [Required]
         public string Medium { get; set; }
 

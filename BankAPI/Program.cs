@@ -1,5 +1,7 @@
 using BankAPI.Config;
 using BankAPI.Data;
+using BankAPI.Repository;
+using BankAPI.Repository.IRepository;
 using IBM.Data.DB2.Core;
 using IBM.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +19,13 @@ builder.Services.AddDbContext<ApplicationDbContext>(option =>
 {
     option.UseSqlServer(builder.Configuration.GetConnectionString("DefaultSQLConnection"));
 });
+
+//builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+builder.Services.AddScoped<ICustomerRepository,CustomerRepository>();
+builder.Services.AddScoped<IAccountRepository,AccountRepository>();
+builder.Services.AddScoped<IDepositRepository,DepositRepository>();
+builder.Services.AddScoped<IWithdrawalRepository,WithdrawalRepository>();
+builder.Services.AddScoped<IBillRepository,BillRepository>();
 
 
 

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using bankapi.models;
 using BankAPI.Models;
 using BankAPI.Models.Dto;
 
@@ -17,6 +18,9 @@ namespace BankAPI.Config
 
             CreateMap<Deposit, DepositDTO>();
             CreateMap<DepositDTO, Deposit>();
+
+            CreateMap<Withdrawal, WithdrawalDTO>();
+            CreateMap<WithdrawalDTO, Withdrawal>();
             //CreateMap<AddressDTO, Address>();
         }
     }
