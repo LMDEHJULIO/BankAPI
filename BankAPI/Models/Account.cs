@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace BankAPI.Models
 {
@@ -24,8 +25,15 @@ namespace BankAPI.Models
 
      
         public int CustomerId { get; set; }
+
+        [JsonIgnore]
+        public virtual ICollection<Transaction> Transactions { get; set; }
         
         [ForeignKey("CustomerId")]
         public Customer? Customer { get; set; }
+
+        public Account() { 
+            Transactions = new HashSet<Transaction>();
+        }
     }
 }

@@ -12,6 +12,8 @@
   <ItemGroup>
     <Compile Remove="Migrations\20231127021333_UpdateTransactionEnum.cs" />
     <Compile Remove="Migrations\20231127021333_UpdateTransactionEnum.Designer.cs" />
+    <Compile Remove="Migrations\20231128130848_AddRecipientID.cs" />
+    <Compile Remove="Migrations\20231128130848_AddRecipientID.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -34,6 +36,7 @@
   <ItemGroup>
     <Folder Include="Models\Dto\Create\" />
     <Folder Include="Models\Dto\Update\" />
+    <Folder Include="Response\" />
   </ItemGroup>
 
 </Project>

@@ -62,7 +62,7 @@ namespace BankAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
 
-            var customer = _db.Any(c => c.Id == customerId);
+            var customer = _customerDb.Any(c => c.Id == customerId);
 
             if(customer == false)
             {

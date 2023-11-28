@@ -31,7 +31,7 @@ namespace BankAPI.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult<IEnumerable<Deposit>> GetDeposits()
         {
-            var deposits = _db.GetAll();
+            var deposits = _db.GetAll().Where(d => d.Type == TransactionType.Deposit);
 
             //return Ok(_mapper.Map<List<BillDTO>>(bills));
 
@@ -64,8 +64,11 @@ namespace BankAPI.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<Account> CreateAccount([FromBody] Deposit deposit, long accountId)
+        public ActionResult<Account> CreateDeposit([FromBody] DepositDTO depositDTO, long accountId)
         {
+
+            var deposit = _mapper.Map<Deposit>(depositDTO);
+
             if (deposit == null)
             {
 
@@ -79,16 +82,19 @@ namespace BankAPI.Controllers
 
             var account = _accountDb.Get(accountId);
 
+            account.Balance += deposit.Amount;
+
             if (account == null)
             {
                 return NotFound("Account not Found");
             }
 
-            deposit.PayeeId = accountId;
+            deposit.AccountId = accountId;
 
             _db.Create(deposit);
 
             _db.Save();
+            _accountDb.Save();
 
             return CreatedAtRoute("GetDeposit", new { id = deposit.Id }, deposit);
         }
@@ -111,13 +117,13 @@ namespace BankAPI.Controllers
             }
 
             deposit.Type = depositEdit.Type;
-            deposit.Status = depositEdit.Status; 
+            deposit.Status = depositEdit.Status;
             deposit.Amount = depositEdit.Amount;
             deposit.Medium = depositEdit.Medium;
             deposit.Description = depositEdit.Description;
             deposit.TransactionDate = depositEdit.TransactionDate;
-            deposit.PayeeId = depositEdit.PayeeId;
-   
+            deposit.AccountId = depositEdit.AccountId;
+
 
             _db.Update(deposit);
 

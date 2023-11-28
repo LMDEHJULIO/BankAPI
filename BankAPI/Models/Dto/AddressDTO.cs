@@ -5,6 +5,8 @@ namespace BankAPI.Models.Dto
     public class AddressDTO
     {
         public int Id { get; set; }
+
+        public string StreetName { get; set; }
         
         public string StreetNumber { get; set; }
 

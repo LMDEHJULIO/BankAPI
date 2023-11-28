@@ -26,6 +26,12 @@ namespace BankAPI.Models
         [Required]
         public string Description  { get; set; }
 
+        [ForeignKey("Account")]
+        public long AccountId { get; set; }
+
+        public virtual Account Account { get; set; }
+
+
         public Transaction()
         {
             TransactionDate = DateTime.Now;

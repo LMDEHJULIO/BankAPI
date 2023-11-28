@@ -26,6 +26,8 @@ builder.Services.AddScoped<IAccountRepository,AccountRepository>();
 builder.Services.AddScoped<IDepositRepository,DepositRepository>();
 builder.Services.AddScoped<IWithdrawalRepository,WithdrawalRepository>();
 builder.Services.AddScoped<IBillRepository,BillRepository>();
+builder.Services.AddScoped<ITransactionRepository,TransactionRepository>();
+builder.Services.AddScoped<IP2PRepository,P2PRepository>();
 
 
 
@@ -36,7 +38,10 @@ builder.Services.AddScoped<IBillRepository,BillRepository>();
 //});
 
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+}); ;
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

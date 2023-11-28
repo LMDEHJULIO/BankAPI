@@ -14,6 +14,8 @@
 
         public double Amount { get; set; }
 
+        public long AccountId { get; set; }
+
         public string Description { get; set; }
     }
 }

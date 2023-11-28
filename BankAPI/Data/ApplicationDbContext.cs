@@ -21,6 +21,8 @@ namespace BankAPI.Data
         public DbSet<Withdrawal> Withdrawals { get; set; }
         public DbSet<Bill> Bills { get; set; }
 
+        public DbSet<Transaction> Transactions { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
    
@@ -31,9 +33,20 @@ namespace BankAPI.Data
                 .HasOne(a => a.Customer)
                 .WithMany()
                 .HasForeignKey(a => a.CustomerId);
-          
 
-            base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<Account>()
+                .HasMany(a => a.Transactions)
+                .WithOne(t => t.Account)
+                .HasForeignKey(a => a.AccountId);
+
+
+            modelBuilder.Entity<Transaction>()
+                .HasDiscriminator<string>("TransactionType")
+                .HasValue<Withdrawal>(nameof(TransactionType.Withdrawal))
+                .HasValue<Deposit>(nameof(TransactionType.Deposit))
+                .HasValue<P2P>(nameof(TransactionType.P2P));
+
+            base.OnModelCreating(modelBuilder); 
         }
 
     }

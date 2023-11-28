@@ -38,14 +38,18 @@ namespace BankAPI.Controller
             {
                 IEnumerable<Customer> customers = _db.GetAll(c => c.Address);
 
-                _response.Result = _mapper.Map<List<CustomerDTO>>(customers);
-                _response.IsSuccess = true;
-                _response.StatusCode = System.Net.HttpStatusCode.OK;
+                //_response.Result = _mapper.Map<List<CustomerDTO>>(customers);
+                //_response.IsSuccess = true;
+                //_response.StatusCode = System.Net.HttpStatusCode.OK;
 
-                return Ok(_response);
+                //return Ok(_response);
+
+                return new APIResponse(System.Net.HttpStatusCode.OK, true, customers);
             } catch (Exception ex) {
                 _response.IsSuccess = false;
                 _response.ErrorMessages = new List<string>() { ex.ToString() };
+            
+                
             }
 
             return _response;
@@ -56,7 +60,7 @@ namespace BankAPI.Controller
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<CustomerDTO> GetCustomer(int id) {
+        public ActionResult<APIResponse> GetCustomer(int id) {
             if (id == 0) {
                 return BadRequest();
             }
@@ -67,7 +71,11 @@ namespace BankAPI.Controller
                 return NotFound();
             }
 
-            return Ok(customer);
+            _response.Result = _mapper.Map<CustomerDTO>(customer);
+            _response.IsSuccess = true;
+            _response.StatusCode = System.Net.HttpStatusCode.OK;
+
+            return _response;
         }
 
         [HttpPost]
@@ -75,66 +83,113 @@ namespace BankAPI.Controller
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<CustomerDTO> CreateCustomer([FromBody] Customer customer) {
-            if (customer == null)
+        public ActionResult<APIResponse> CreateCustomer([FromBody] CustomerDTO customerDTO) {
+
+            try
             {
+                if (customerDTO == null)
+                {
 
-                return BadRequest();
-            }
+                    return BadRequest();
+                }
 
-            if (customer.Id > 0)
+                if (customerDTO.Id > 0)
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError);
+                }
+
+                Customer customer = _mapper.Map<Customer>(customerDTO);
+
+                _db.Create(customer);
+                _db.Save();
+
+                _response.Result = _mapper.Map<CustomerDTO>(customer);
+                _response.StatusCode = System.Net.HttpStatusCode.Created;
+
+
+
+                return CreatedAtRoute("GetCustomer", new { id = customer.Id }, _response);
+            } catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError);
+                _response.IsSuccess = false;
+                _response.ErrorMessages = new List<string>() { ex.ToString() };
+
+                return _response;
             }
-
-            _db.Create(customer);
-
-            _db.Save();
-
-            return CreatedAtRoute("GetCustomer", new { id = customer.Id }, customer);
+            return _response; 
         }
 
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [HttpDelete("{id:int}", Name = "DeleteCustomer")]
-        public IActionResult DeleteCustomer(int id) {
-            if (id == 0)
+        public ActionResult<APIResponse> DeleteCustomer(int id) {
+
+
+            try
             {
-                return BadRequest();
+                if (id == 0)
+                {
+                    return BadRequest();
+                }
+
+                var customer = _db.Get(id);
+
+                if (customer == null)
+                {
+                    return NotFound();
+                }
+
+                _db.Remove(customer);
+
+                _db.Save();
+
+                _response.StatusCode = System.Net.HttpStatusCode.NoContent;
+                _response.IsSuccess = true;
+
+                return _response;
+
+            }
+            catch (Exception ex) {
+                _response.IsSuccess = false;
+
+                _response.ErrorMessages = new List<string>() { ex.ToString() };
             }
 
-            var customer = _db.Get(id);
-
-            if (customer == null)
-            {
-                return NotFound();
-            }
-
-            _db.Remove(customer);
-
-            _db.Save();
-
-            return NoContent();
+            return _response;
         }
 
         [HttpPut("{id:int}", Name="UpdateCustomer")]
-        public IActionResult UpdateCustomer(int id, [FromBody] Customer customer) {
-            if (id == null)
+        public ActionResult<APIResponse> UpdateCustomer(int id, [FromBody] Customer customerDTO) {
+            try {
+                if (id == null)
+                {
+                    return BadRequest();
+                }
+
+                var editCustomer = _db.Get(id);
+
+                editCustomer.FirstName = customerDTO.FirstName;
+                editCustomer.LastName = customerDTO.LastName;
+                //editCustomer.Address = customer.Address;
+
+                _db.Update(editCustomer);
+
+                _db.Save();
+
+                _response.StatusCode = System.Net.HttpStatusCode.NoContent;
+                _response.IsSuccess = true;
+
+                return Ok(_response);
+            } catch (Exception ex)
             {
-                return BadRequest();
+
+                _response.IsSuccess = false;
+
+                _response.ErrorMessages = new List<string>() { ex.ToString() };
             }
 
-            var editCustomer = _db.Get(id);
+            return _response;
 
-            editCustomer.FirstName = customer.FirstName;
-            editCustomer.LastName = customer.LastName;
-            //editCustomer.Address = customer.Address;
-
-            _db.Update(editCustomer);
-
-            _db.Save();
-
-            return NoContent();
         }
 
 

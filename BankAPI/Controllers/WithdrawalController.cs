@@ -64,8 +64,11 @@ namespace BankAPI.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<Withdrawal> CreateWithdrawal([FromBody] Withdrawal withdrawal, long accountId)
+        public ActionResult<Withdrawal> CreateWithdrawal([FromBody] WithdrawalDTO withdrawalDTO, long accountId)
         {
+
+            var withdrawal = _mapper.Map<Withdrawal>(withdrawalDTO);
+
             if (withdrawal == null)
             {
 
@@ -84,11 +87,14 @@ namespace BankAPI.Controllers
                 return NotFound("Customer not Found");
             }
 
-            withdrawal.PayerId = accountId;
+            withdrawal.AccountId = accountId;
+
+            account.Balance -= withdrawal.Amount;
 
             _db.Create(withdrawal);
 
             _db.Save();
+            _accountDb.Save();
 
             return CreatedAtRoute("GetWithdrawal", new { id = withdrawal.Id }, withdrawal);
         }
@@ -115,7 +121,7 @@ namespace BankAPI.Controllers
             withdrawal.Medium = withdrawalEdit.Medium;
             withdrawal.Description = withdrawalEdit.Description;
             withdrawal.TransactionDate = withdrawalEdit.TransactionDate;
-            withdrawal.PayerId = withdrawalEdit.PayerId;
+            withdrawal.AccountId = withdrawalEdit.AccountId;
 
 
             _db.Update(withdrawal);

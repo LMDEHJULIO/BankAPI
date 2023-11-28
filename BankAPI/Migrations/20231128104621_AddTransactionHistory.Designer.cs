@@ -4,6 +4,7 @@ using BankAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BankAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231128104621_AddTransactionHistory")]
+    partial class AddTransactionHistory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -219,11 +222,6 @@ namespace BankAPI.Migrations
                 {
                     b.HasBaseType("BankAPI.Models.Transaction");
 
-                    b.Property<long?>("RecipientId")
-                        .HasColumnType("bigint");
-
-                    b.HasIndex("RecipientId");
-
                     b.HasDiscriminator().HasValue("P2P");
                 });
 
@@ -272,15 +270,6 @@ namespace BankAPI.Migrations
                         .IsRequired();
 
                     b.Navigation("Account");
-                });
-
-            modelBuilder.Entity("BankAPI.Models.P2P", b =>
-                {
-                    b.HasOne("BankAPI.Models.Account", "RecipientAccount")
-                        .WithMany()
-                        .HasForeignKey("RecipientId");
-
-                    b.Navigation("RecipientAccount");
                 });
 
             modelBuilder.Entity("BankAPI.Models.Account", b =>

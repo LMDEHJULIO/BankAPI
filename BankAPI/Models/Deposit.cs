@@ -5,7 +5,7 @@ namespace BankAPI.Models
 {
     public class Deposit : Transaction
     {
-        [ForeignKey("AccountId")]
-        public long PayeeId { get; set; }
+        //[ForeignKey("AccountId")]
+        //public long PayeeId { get; set; }
     }
 }
