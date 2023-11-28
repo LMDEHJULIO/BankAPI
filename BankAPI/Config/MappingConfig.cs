@@ -2,6 +2,7 @@
 using bankapi.models;
 using BankAPI.Models;
 using BankAPI.Models.Dto;
+using BankAPI.Models.Dto.Create;
 
 namespace BankAPI.Config
 {
@@ -10,6 +11,8 @@ namespace BankAPI.Config
         public MappingConfig() { 
             CreateMap<Customer, CustomerDTO>();
             CreateMap<CustomerDTO, Customer>(); 
+            CreateMap<CustomerCreateDTO, Customer>();
+            CreateMap<Customer, CustomerCreateDTO>();
 
             CreateMap<Address, AddressDTO>();
             CreateMap<AddressDTO, Address>();

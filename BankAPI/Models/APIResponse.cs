@@ -6,17 +6,17 @@ namespace BankAPI.Models
 
     public class APIResponse
     {
-        public HttpStatusCode StatusCode { get; set; }
-        public bool IsSuccess { get; set; }
-        public List<string> ErrorMessages { get; set; }
+        public HttpStatusCode Code { get; set; }
 
-        public object Result { get; set;  }
+        public string? Message { get; set; }
+        //public List<string> ErrorMessages { get; set; }
 
-        public APIResponse(HttpStatusCode statusCode, bool success, object result, List<string> errorMessages = null) { 
-            StatusCode = statusCode;
-            IsSuccess = success;
-            ErrorMessages = errorMessages;
-            Result = result;
+        public object Data { get; set;  }
+
+        public APIResponse(HttpStatusCode statusCode, object result, string mssg = null) { 
+            Code = statusCode;
+            Data = result;
+            Message = mssg;
         }
 
         public APIResponse() { }

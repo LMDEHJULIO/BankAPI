@@ -15,10 +15,8 @@ namespace BankAPI.Controllers
     public class WithdrawalController : ControllerBase
 
     {
-
         private readonly IWithdrawalRepository _db;
         private readonly IAccountRepository _accountDb;
-
         private readonly IMapper _mapper;
 
         public WithdrawalController(IWithdrawalRepository db, IAccountRepository accountDb, IMapper mapper)
@@ -29,125 +27,125 @@ namespace BankAPI.Controllers
         }
 
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult<IEnumerable<Withdrawal>> GetWithdrawals()
+        public ActionResult<APIResponse> GetWithdrawals()
         {
-            var withdrawal = _db.GetAll();
-
-            //return Ok(_mapper.Map<List<BillDTO>>(bills));
-
-            return Ok(_mapper.Map<List<WithdrawalDTO>>(withdrawal));
+            try
+            {
+                var withdrawals = _db.GetAll();
+                var withdrawalDTOs = _mapper.Map<List<WithdrawalDTO>>(withdrawals);
+                return Ok(new APIResponse(System.Net.HttpStatusCode.OK, withdrawalDTOs, "Success"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new APIResponse(System.Net.HttpStatusCode.InternalServerError, null, ex.Message));
+            }
         }
 
         [HttpGet("{id}", Name = "GetWithdrawal")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<Withdrawal> GetWithdrawal(long id)
+        public ActionResult<APIResponse> GetWithdrawal(long id)
         {
             if (id == 0)
             {
-                return BadRequest();
+                return BadRequest(new APIResponse(System.Net.HttpStatusCode.BadRequest, null, "Invalid ID"));
             }
-            var withdrawal = _db.Get(id);
 
-            if (withdrawal == null)
+            try
             {
-                return NotFound();
-            }
+                var withdrawal = _db.Get(id);
+                if (withdrawal == null)
+                {
+                    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Withdrawal not found"));
+                }
 
-            return Ok(withdrawal);
+                var withdrawalDTO = _mapper.Map<WithdrawalDTO>(withdrawal);
+                return Ok(new APIResponse(System.Net.HttpStatusCode.OK, withdrawalDTO, "Success"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new APIResponse(System.Net.HttpStatusCode.InternalServerError, null, ex.Message));
+            }
         }
 
         [HttpPost("accounts/{accountId}/withdrawals")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<Withdrawal> CreateWithdrawal([FromBody] WithdrawalDTO withdrawalDTO, long accountId)
+        public ActionResult<APIResponse> CreateWithdrawal([FromBody] WithdrawalDTO withdrawalDTO, long accountId)
         {
-
-            var withdrawal = _mapper.Map<Withdrawal>(withdrawalDTO);
-
-            if (withdrawal == null)
+            if (withdrawalDTO == null)
             {
-
-                return BadRequest();
+                return BadRequest(new APIResponse(System.Net.HttpStatusCode.BadRequest, null, "Withdrawal data is null"));
             }
 
-            if (withdrawal.Id > 0)
+            try
             {
-                return StatusCode(StatusCodes.Status500InternalServerError);
+                var withdrawal = _mapper.Map<Withdrawal>(withdrawalDTO);
+                var account = _accountDb.Get(accountId);
+                if (account == null)
+                {
+                    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Account not found"));
+                }
+
+                withdrawal.AccountId = accountId;
+                account.Balance -= withdrawal.Amount; // Ensure business logic is correct for balance update
+
+                _db.Create(withdrawal);
+                _db.Save();
+                _accountDb.Save();
+
+                return CreatedAtRoute("GetWithdrawal", new { id = withdrawal.Id }, new APIResponse(System.Net.HttpStatusCode.Created, _mapper.Map<WithdrawalDTO>(withdrawal), "Withdrawal created successfully"));
             }
-
-            var account = _accountDb.Get(accountId);
-
-            if (account == null)
+            catch (Exception ex)
             {
-                return NotFound("Customer not Found");
+                return StatusCode(StatusCodes.Status500InternalServerError, new APIResponse(System.Net.HttpStatusCode.InternalServerError, null, "Error creating withdrawal: " + ex.Message));
             }
-
-            withdrawal.AccountId = accountId;
-
-            account.Balance -= withdrawal.Amount;
-
-            _db.Create(withdrawal);
-
-            _db.Save();
-            _accountDb.Save();
-
-            return CreatedAtRoute("GetWithdrawal", new { id = withdrawal.Id }, withdrawal);
         }
 
         [HttpPut("{id}")]
-
-        public IActionResult UpdateWithdrawal(long id, [FromBody] Withdrawal withdrawalEdit)
+        public ActionResult<APIResponse> UpdateWithdrawal(long id, [FromBody] WithdrawalDTO withdrawalDTO)
         {
-            if (withdrawalEdit == null)
+            if (withdrawalDTO == null)
             {
-                return BadRequest();
+                return BadRequest(new APIResponse(System.Net.HttpStatusCode.BadRequest, null, "Invalid withdrawal data"));
             }
 
-            var withdrawal = _db.Get(id);
-
-            if (withdrawal == null)
+            try
             {
-                return NotFound();
+                var withdrawal = _db.Get(id);
+                if (withdrawal == null)
+                {
+                    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Withdrawal not found"));
+                }
+
+                _mapper.Map(withdrawalDTO, withdrawal);
+                _db.Update(withdrawal);
+                _db.Save();
+
+                return Ok(new APIResponse(System.Net.HttpStatusCode.OK, _mapper.Map<WithdrawalDTO>(withdrawal), "Withdrawal updated successfully"));
             }
-
-            withdrawal.Type = withdrawalEdit.Type;
-            withdrawal.Status = withdrawalEdit.Status;
-            withdrawal.Amount = withdrawalEdit.Amount;
-            withdrawal.Medium = withdrawalEdit.Medium;
-            withdrawal.Description = withdrawalEdit.Description;
-            withdrawal.TransactionDate = withdrawalEdit.TransactionDate;
-            withdrawal.AccountId = withdrawalEdit.AccountId;
-
-
-            _db.Update(withdrawal);
-
-            _db.Save();
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new APIResponse(System.Net.HttpStatusCode.InternalServerError, null, "Error updating withdrawal: " + ex.Message));
+            }
         }
 
         [HttpDelete("{id}")]
-        public IActionResult DeleteWithdrawal(long id)
+        public ActionResult<APIResponse> DeleteWithdrawal(long id)
         {
-            var withdrawal = _db.Get(id);
-
-            if (withdrawal == null)
+            try
             {
-                return NotFound();
+                var withdrawal = _db.Get(id);
+                if (withdrawal == null)
+                {
+                    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Withdrawal not found"));
+                }
+
+                _db.Remove(withdrawal);
+                _db.Save();
+
+                return Ok(new APIResponse(System.Net.HttpStatusCode.OK, null, "Withdrawal deleted successfully"));
             }
-
-            _db.Remove(withdrawal);
-
-            _db.Save();
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new APIResponse(System.Net.HttpStatusCode.InternalServerError, null, "Error deleting withdrawal: " + ex.Message));
+            }
         }
-
-
     }
 }

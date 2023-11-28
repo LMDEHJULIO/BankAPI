@@ -17,13 +17,9 @@ namespace BankAPI.Controllers
     [ApiController]
     public class BillController : ControllerBase
     {
-
         private readonly IBillRepository _db;
-
         private readonly IAccountRepository _accountDb;
-
         private readonly IMapper _mapper;
-
         private readonly ILogger<BillController> _logger;
 
         public BillController(IBillRepository db, IAccountRepository accountDb, IMapper mapper, ILogger<BillController> logger)
@@ -34,114 +30,118 @@ namespace BankAPI.Controllers
             _logger = logger;
         }
 
-
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult<IEnumerable<BillDTO>> GetBills()
+        public ActionResult<APIResponse> GetBills()
         {
-            var bills = _db.GetAll();
-
-            //return Ok(_mapper.Map<List<BillDTO>>(bills));
-            return Ok(_mapper.Map<List<BillDTO>>(bills));
+            try
+            {
+                var bills = _db.GetAll();
+                var billDTOs = _mapper.Map<List<BillDTO>>(bills);
+                return Ok(new APIResponse(System.Net.HttpStatusCode.OK, billDTOs, "Success"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new APIResponse(System.Net.HttpStatusCode.InternalServerError, null, ex.Message));
+            }
         }
 
         [HttpGet("{id}", Name = "GetBill")]
-        public ActionResult<BillDTO> GetBill(int id)
+        public ActionResult<APIResponse> GetBill(int id)
         {
-            var bill = _db.Get(id);
+            try
+            {
+                var bill = _db.Get(id);
+                if (bill == null)
+                {
+                    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Bill not found"));
+                }
 
-            return Ok(_mapper.Map<BillDTO>(bill));
+                var billDTO = _mapper.Map<BillDTO>(bill);
+                return Ok(new APIResponse(System.Net.HttpStatusCode.OK, billDTO, "Success"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new APIResponse(System.Net.HttpStatusCode.InternalServerError, null, ex.Message));
+            }
         }
 
-
         [HttpPost("accounts/{accountId}/bills")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<BillDTO> CreateBill(long accountId, [FromBody] BillDTO billDTO)
+        public ActionResult<APIResponse> CreateBill(long accountId, [FromBody] BillDTO billDTO)
         {
-            if (!ModelState.IsValid)
+            if (billDTO == null)
             {
-
-                return BadRequest(ModelState);
+                return BadRequest(new APIResponse(System.Net.HttpStatusCode.BadRequest, null, "Bill data is null"));
             }
 
-            //if (bill.Id > 0)
-            //{
-            //    return StatusCode(StatusCodes.Status500InternalServerError);
-            //}
+            try
+            {
+                if (!_accountDb.Any(a => a.Id == accountId))
+                {
+                    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Account not found"));
+                }
 
-            _logger.LogInformation("Creating bill for accountId: {AccountId}", accountId);
+                var newBill = _mapper.Map<Bill>(billDTO);
+                newBill.AccountId = accountId;
+                _db.Create(newBill);
+                _db.Save();
 
-            if (!_accountDb.Any(a => a.Id == accountId)) {
-                return NotFound("Account not found");
+                var createdBillDto = _mapper.Map<BillDTO>(newBill);
+                return CreatedAtRoute("GetBill", new { id = createdBillDto.Id }, new APIResponse(System.Net.HttpStatusCode.Created, createdBillDto, "Bill created successfully"));
             }
-
-            var newBill = _mapper.Map<Bill>(billDTO);
-
-            newBill.AccountId = accountId; 
-
-            _db.Create(newBill);
-
-
-            _db.Save();
-
-            var createdBillDto = _mapper.Map<BillDTO>(newBill);
-
-            return CreatedAtRoute("GetBill", new { id = createdBillDto.Id }, createdBillDto);
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new APIResponse(System.Net.HttpStatusCode.InternalServerError, null, "Error creating bill: " + ex.Message));
+            }
         }
 
         [HttpPut("{id}")]
-        public IActionResult UpdateBill(int id, [FromBody] Bill billEdit)
+        public ActionResult<APIResponse> UpdateBill(int id, [FromBody] BillDTO billDTO)
         {
-            if (billEdit == null)
+            if (billDTO == null)
             {
-                return BadRequest();
+                return BadRequest(new APIResponse(System.Net.HttpStatusCode.BadRequest, null, "Invalid bill data"));
             }
 
-            var bill = _db.Get(id);
-
-            if (bill == null)
+            try
             {
-                return NotFound();
+                var bill = _db.Get(id);
+                if (bill == null)
+                {
+                    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Bill not found"));
+                }
+
+                _mapper.Map(billDTO, bill);
+                _db.Update(bill);
+                _db.Save();
+
+                return Ok(new APIResponse(System.Net.HttpStatusCode.OK, _mapper.Map<BillDTO>(bill), "Bill updated successfully"));
             }
-
-            bill.Id = billEdit.Id;           
-            bill.Status = billEdit.Status;
-            bill.Payee = billEdit.Payee;           
-            bill.Nickname = billEdit.Nickname;
-            bill.CreationDate = billEdit.CreationDate;
-            bill.PaymentDate = billEdit.PaymentDate;
-            bill.RecurringDate = billEdit.RecurringDate;
-            bill.UpcomingPaymentDate = billEdit.UpcomingPaymentDate;
-            bill.PaymentAmount = billEdit.PaymentAmount;
-            bill.AccountId = billEdit.AccountId;
-            bill.Account = billEdit.Account;
-
-
-            _db.Update(bill);
-
-            _db.Save();
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new APIResponse(System.Net.HttpStatusCode.InternalServerError, null, "Error updating bill: " + ex.Message));
+            }
         }
 
         [HttpDelete("{id}")]
-        public IActionResult DeleteBill(int id)
+        public ActionResult<APIResponse> DeleteBill(int id)
         {
-            var bill = _db.Get(id);
-
-            if (bill == null)
+            try
             {
-                return NotFound();
+                var bill = _db.Get(id);
+                if (bill == null)
+                {
+                    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Bill not found"));
+                }
+
+                _db.Remove(bill);
+                _db.Save();
+
+                return Ok(new APIResponse(System.Net.HttpStatusCode.OK, null, "Bill deleted successfully"));
             }
-
-            _db.Remove(bill);
-
-            _db.Save();
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new APIResponse(System.Net.HttpStatusCode.InternalServerError, null, "Error deleting bill: " + ex.Message));
+            }
         }
     }
 

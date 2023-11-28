@@ -18,7 +18,7 @@ namespace BankAPI.Models
         public TransactionStatus Status { get; set; }
 
         [Required]
-        public string Medium { get; set; }
+        public Medium? Medium { get; set; }
 
         [Required]
         public double Amount { get; set; }

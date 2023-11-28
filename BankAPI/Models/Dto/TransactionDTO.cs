@@ -10,7 +10,7 @@
 
         public TransactionStatus Status { get; set; }
 
-        public string Medium { get; set; }
+        public Medium? Medium { get; set; }
 
         public double Amount { get; set; }
 

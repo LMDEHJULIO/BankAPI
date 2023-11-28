@@ -2,6 +2,7 @@
 using BankAPI.Data;
 using BankAPI.Models;
 using BankAPI.Models.Dto;
+using BankAPI.Models.Dto.Create;
 using BankAPI.Repository;
 using BankAPI.Repository.IRepository;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -16,183 +17,128 @@ namespace BankAPI.Controller
     [ApiController]
     public class CustomerController : ControllerBase
     {
-
-        protected APIResponse _response; 
-
         private readonly ICustomerRepository _db;
+        private readonly IMapper _mapper;
 
-        private readonly IMapper _mapper; 
-
-        public CustomerController(ICustomerRepository db, IMapper mapper) {
-            _db = db; 
+        public CustomerController(ICustomerRepository db, IMapper mapper)
+        {
+            _db = db;
             _mapper = mapper;
-            this._response = new();
         }
 
-
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult<APIResponse> GetCustomers() {
-
+        public ActionResult<APIResponse> GetCustomers()
+        {
             try
             {
                 IEnumerable<Customer> customers = _db.GetAll(c => c.Address);
-
-                //_response.Result = _mapper.Map<List<CustomerDTO>>(customers);
-                //_response.IsSuccess = true;
-                //_response.StatusCode = System.Net.HttpStatusCode.OK;
-
-                //return Ok(_response);
-
-                return new APIResponse(System.Net.HttpStatusCode.OK, true, customers);
-            } catch (Exception ex) {
-                _response.IsSuccess = false;
-                _response.ErrorMessages = new List<string>() { ex.ToString() };
-            
-                
+                return new APIResponse(System.Net.HttpStatusCode.OK, customers, "Success");
             }
-
-            return _response;
-
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new APIResponse(System.Net.HttpStatusCode.InternalServerError, null, "Error fetching customers: " + ex.Message));
+            }
         }
 
         [HttpGet("{id}", Name = "GetCustomer")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<APIResponse> GetCustomer(int id) {
-            if (id == 0) {
-                return BadRequest();
-            }
-            var customer = _db.Get(id, c => c.Address);
-
-            if (customer == null)
+        public ActionResult<APIResponse> GetCustomer(int id)
+        {
+            if (id == 0)
             {
-                return NotFound();
+                return BadRequest(new APIResponse(System.Net.HttpStatusCode.BadRequest, null, "Invalid ID"));
             }
 
-            _response.Result = _mapper.Map<CustomerDTO>(customer);
-            _response.IsSuccess = true;
-            _response.StatusCode = System.Net.HttpStatusCode.OK;
+            try
+            {
+                var customer = _db.Get(id, c => c.Address);
+                if (customer == null)
+                {
+                    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Customer not found"));
+                }
 
-            return _response;
+                return Ok(new APIResponse(System.Net.HttpStatusCode.OK, customer, "Success"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new APIResponse(System.Net.HttpStatusCode.InternalServerError, null, "Error retrieving customer: " + ex.Message));
+            }
         }
 
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public ActionResult<APIResponse> CreateCustomer([FromBody] CustomerDTO customerDTO) {
+        public ActionResult<APIResponse> CreateCustomer([FromBody] CustomerCreateDTO customerDTO)
+        {
+            if (customerDTO == null)
+            {
+                return BadRequest(new APIResponse(System.Net.HttpStatusCode.BadRequest, null, "Customer data is null"));
+            }
 
             try
             {
-                if (customerDTO == null)
-                {
-
-                    return BadRequest();
-                }
-
-                if (customerDTO.Id > 0)
-                {
-                    return StatusCode(StatusCodes.Status500InternalServerError);
-                }
-
                 Customer customer = _mapper.Map<Customer>(customerDTO);
-
                 _db.Create(customer);
                 _db.Save();
 
-                _response.Result = _mapper.Map<CustomerDTO>(customer);
-                _response.StatusCode = System.Net.HttpStatusCode.Created;
-
-
-
-                return CreatedAtRoute("GetCustomer", new { id = customer.Id }, _response);
-            } catch (Exception ex)
-            {
-                _response.IsSuccess = false;
-                _response.ErrorMessages = new List<string>() { ex.ToString() };
-
-                return _response;
+                return CreatedAtRoute("GetCustomer", new { id = customer.Id }, new APIResponse(System.Net.HttpStatusCode.Created, customer, "Customer created successfully"));
             }
-            return _response; 
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new APIResponse(System.Net.HttpStatusCode.InternalServerError, null, "Error creating customer: " + ex.Message));
+            }
         }
 
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [HttpDelete("{id:int}", Name = "DeleteCustomer")]
-        public ActionResult<APIResponse> DeleteCustomer(int id) {
-
+        [HttpDelete("{id}", Name = "DeleteCustomer")]
+        public ActionResult<APIResponse> DeleteCustomer(int id)
+        {
+            if (id == 0)
+            {
+                return BadRequest(new APIResponse(System.Net.HttpStatusCode.BadRequest, null, "Invalid ID"));
+            }
 
             try
             {
-                if (id == 0)
-                {
-                    return BadRequest();
-                }
-
                 var customer = _db.Get(id);
-
                 if (customer == null)
                 {
-                    return NotFound();
+                    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Customer not found"));
                 }
 
                 _db.Remove(customer);
-
                 _db.Save();
 
-                _response.StatusCode = System.Net.HttpStatusCode.NoContent;
-                _response.IsSuccess = true;
-
-                return _response;
-
+                return NoContent();
             }
-            catch (Exception ex) {
-                _response.IsSuccess = false;
-
-                _response.ErrorMessages = new List<string>() { ex.ToString() };
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new APIResponse(System.Net.HttpStatusCode.InternalServerError, null, "Error deleting customer: " + ex.Message));
             }
-
-            return _response;
         }
 
-        [HttpPut("{id:int}", Name="UpdateCustomer")]
-        public ActionResult<APIResponse> UpdateCustomer(int id, [FromBody] Customer customerDTO) {
-            try {
-                if (id == null)
+        [HttpPut("{id}", Name = "UpdateCustomer")]
+        public ActionResult<APIResponse> UpdateCustomer(int id, [FromBody] CustomerDTO customerDTO)
+        {
+            if (id <= 0 || customerDTO == null)
+            {
+                return BadRequest(new APIResponse(System.Net.HttpStatusCode.BadRequest, null, "Invalid input"));
+            }
+
+            try
+            {
+                var editCustomer = _db.Get(id);
+                if (editCustomer == null)
                 {
-                    return BadRequest();
+                    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Customer not found"));
                 }
 
-                var editCustomer = _db.Get(id);
-
-                editCustomer.FirstName = customerDTO.FirstName;
-                editCustomer.LastName = customerDTO.LastName;
-                //editCustomer.Address = customer.Address;
-
+                _mapper.Map(customerDTO, editCustomer);
                 _db.Update(editCustomer);
-
                 _db.Save();
 
-                _response.StatusCode = System.Net.HttpStatusCode.NoContent;
-                _response.IsSuccess = true;
-
-                return Ok(_response);
-            } catch (Exception ex)
-            {
-
-                _response.IsSuccess = false;
-
-                _response.ErrorMessages = new List<string>() { ex.ToString() };
+                return Ok(new APIResponse(System.Net.HttpStatusCode.OK, editCustomer, "Customer updated successfully"));
             }
-
-            return _response;
-
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new APIResponse(System.Net.HttpStatusCode.InternalServerError, null, "Error updating customer: " + ex.Message));
+            }
         }
-
-
-
     }
 }
