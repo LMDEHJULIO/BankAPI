@@ -24,7 +24,7 @@ namespace BankAPI.Middleware
 
                 context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 
-                await context.Response.WriteAsJsonAsync(new APIResponse(HttpStatusCode.InternalServerError, null, "An unexpected error occurred");
+                await context.Response.WriteAsJsonAsync(new APIResponse(HttpStatusCode.InternalServerError, null, "An unexpected error occurred"));
             }   
         }
 
