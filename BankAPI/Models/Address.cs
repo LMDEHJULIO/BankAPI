@@ -23,5 +23,7 @@ namespace BankAPI.Models
 
         [Required]
         public string Zip { get; set; }
+
+        //public Customer Customer { get; set; }
     }
 }
