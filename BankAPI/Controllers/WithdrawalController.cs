@@ -117,7 +117,17 @@ namespace BankAPI.Controllers
 
                 withdrawal.AccountId = accountId;
 
-                account.Balance -= withdrawal.Amount; // Ensure business logic is correct for balance update
+                //account.Balance -= withdrawal.Amount; 
+
+                if (withdrawal.Medium == Medium.Balance)
+                {
+                    account.Balance -= withdrawal.Amount;
+                }
+
+                if (withdrawal.Medium == Medium.Rewards)
+                {
+                    account.Rewards -= (int)withdrawal.Amount;
+                }
 
                 _db.Create(withdrawal);
                 _db.Save();

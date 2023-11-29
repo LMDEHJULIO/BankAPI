@@ -126,7 +126,14 @@ namespace BankAPI.Controllers
 
                 deposit.AccountId = accountId;
 
-                account.Balance += deposit.Amount; 
+                if (deposit.Medium == Medium.Balance) {
+                    account.Balance += deposit.Amount;
+                }
+
+                if(deposit.Medium == Medium.Rewards)
+                {
+                    account.Rewards += (int)deposit.Amount;
+                }
 
                 _db.Create(deposit);
                 _db.Save();

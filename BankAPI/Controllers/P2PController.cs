@@ -61,7 +61,15 @@ namespace BankAPI.Controllers
                     return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Recipient Account not found"));
                 }
 
-                account.Balance -= p2p.Amount;
+                if (p2p.Medium == Medium.Balance)
+                {
+                    account.Balance -= p2p.Amount;
+                }
+
+                    if (p2p.Medium == Medium.Rewards)
+                {
+                    account.Rewards -= (int)p2p.Amount;
+                }
 
                 recipientAccount.Balance += p2p.Amount;
 
