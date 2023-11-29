@@ -30,7 +30,7 @@ namespace BankAPI.Controllers
         }
 
         [HttpGet("customers/{customerId}/accounts")]
-        public ActionResult<ICollection<Account>> GetAccounts(int customerId)
+        public ActionResult<ICollection<Account>> GetAccountsById(int customerId)
         {
             var customerValid = _customerDb.Any(c => c.Id == customerId);
 
