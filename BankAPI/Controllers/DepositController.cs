@@ -25,6 +25,8 @@ namespace BankAPI.Controllers
         }
 
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public ActionResult<APIResponse> GetDeposits()
         {
             try
@@ -40,6 +42,10 @@ namespace BankAPI.Controllers
         }
 
         [HttpGet("{id}", Name = "GetDeposit")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public ActionResult<APIResponse> GetDeposit(long id)
         {
             if (id == 0)
@@ -65,6 +71,9 @@ namespace BankAPI.Controllers
         }
 
         [HttpPost("accounts/{accountId}/deposits")]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public ActionResult<APIResponse> CreateDeposit([FromBody] DepositDTO depositDTO, long accountId)
         {
             if (depositDTO == null)
@@ -97,6 +106,10 @@ namespace BankAPI.Controllers
         }
 
         [HttpPut("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public ActionResult<APIResponse> UpdateDeposit(long id, [FromBody] DepositDTO depositDTO)
         {
             if (depositDTO == null)
@@ -125,6 +138,10 @@ namespace BankAPI.Controllers
         }
 
         [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public ActionResult<APIResponse> DeleteDeposit(long id)
         {
             try

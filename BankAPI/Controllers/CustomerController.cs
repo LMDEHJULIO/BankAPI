@@ -27,6 +27,8 @@ namespace BankAPI.Controller
         }
 
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public ActionResult<APIResponse> GetCustomers()
         {
             try
@@ -41,6 +43,10 @@ namespace BankAPI.Controller
         }
 
         [HttpGet("{id}", Name = "GetCustomer")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public ActionResult<APIResponse> GetCustomer(int id)
         {
             if (id == 0)
@@ -65,6 +71,9 @@ namespace BankAPI.Controller
         }
 
         [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public ActionResult<APIResponse> CreateCustomer([FromBody] CustomerCreateDTO customerDTO)
         {
             if (customerDTO == null)
@@ -87,6 +96,11 @@ namespace BankAPI.Controller
         }
 
         [HttpDelete("{id}", Name = "DeleteCustomer")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+
         public ActionResult<APIResponse> DeleteCustomer(int id)
         {
             if (id == 0)
@@ -114,6 +128,10 @@ namespace BankAPI.Controller
         }
 
         [HttpPut("{id}", Name = "UpdateCustomer")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public ActionResult<APIResponse> UpdateCustomer(int id, [FromBody] CustomerDTO customerDTO)
         {
             if (id <= 0 || customerDTO == null)
