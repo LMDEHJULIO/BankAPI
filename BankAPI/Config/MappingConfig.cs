@@ -31,6 +31,9 @@ namespace BankAPI.Config
 
             CreateMap<P2P, P2PDTO>();
             CreateMap<P2PDTO, P2P>();
+
+            CreateMap<AccountDTO, Account>();
+            CreateMap<Account, AccountDTO>();
             //CreateMap<AddressDTO, Address>();
         }
     }

@@ -50,14 +50,19 @@ namespace BankAPI.Controllers
             {
                 var p2p = _mapper.Map<P2P>(p2pDTO);
                 var account = _accountDb.Get(accountId);
-                var recipientAccount = _accountDb.Get(accountId);
+                var recipientAccount = _accountDb.Get(p2pDTO.RecipientID);
 
-                if (account == null || recipientAccount == null)
+                if (account == null)
                 {
-                    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Account or Recipient Account not found"));
+                    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Sending Account not found"));
+                }
+
+                if (recipientAccount == null) {
+                    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Recipient Account not found"));
                 }
 
                 account.Balance -= p2p.Amount;
+
                 recipientAccount.Balance += p2p.Amount;
 
                 p2p.AccountId = accountId;
@@ -104,6 +109,8 @@ namespace BankAPI.Controllers
             try
             {
                 var p2p = _db.Get(id);
+
+
                 if (p2p == null)
                 {
                     return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "P2P transaction not found"));
@@ -135,7 +142,7 @@ namespace BankAPI.Controllers
                 _db.Remove(p2p);
                 _db.Save();
 
-                return Ok(new APIResponse(System.Net.HttpStatusCode.OK, null, "P2P transaction deleted successfully"));
+                return NoContent();
             }
             catch (Exception ex)
             {

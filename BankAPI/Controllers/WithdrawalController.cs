@@ -66,6 +66,38 @@ namespace BankAPI.Controllers
             }
         }
 
+        [HttpGet("{accountId}/withdrawals")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public ActionResult<APIResponse> GetAccountWithdrawals(long accountId)
+        {
+            try
+            {
+                var account = _accountDb.Get(accountId);
+
+                if (account == null)
+                {
+                    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Account not found"));
+                }
+
+                var withdrawals = _db.GetAll().Where(d => d.AccountId == accountId);
+
+                if (withdrawals == null)
+                {
+                    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "No withdrawals found"));
+                }
+
+                var withdrawalDTOs = _mapper.Map<List<WithdrawalDTO>>(withdrawals);
+
+                return Ok(new APIResponse(System.Net.HttpStatusCode.OK, withdrawalDTOs, "Success"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new APIResponse(System.Net.HttpStatusCode.InternalServerError, null, "Error fetching account/deposits: " + ex.Message));
+            }
+        }
+
         [HttpPost("accounts/{accountId}/withdrawals")]
         public ActionResult<APIResponse> CreateWithdrawal([FromBody] WithdrawalDTO withdrawalDTO, long accountId)
         {
@@ -84,6 +116,7 @@ namespace BankAPI.Controllers
                 }
 
                 withdrawal.AccountId = accountId;
+
                 account.Balance -= withdrawal.Amount; // Ensure business logic is correct for balance update
 
                 _db.Create(withdrawal);
@@ -140,7 +173,7 @@ namespace BankAPI.Controllers
                 _db.Remove(withdrawal);
                 _db.Save();
 
-                return Ok(new APIResponse(System.Net.HttpStatusCode.OK, null, "Withdrawal deleted successfully"));
+                return NoContent();
             }
             catch (Exception ex)
             {

@@ -50,23 +50,57 @@ namespace BankAPI.Controllers
         {
             if (id == 0)
             {
-                return BadRequest(new APIResponse(System.Net.HttpStatusCode.BadRequest, null, "Invalid ID"));
+                return BadRequest(new APIResponse(System.Net.HttpStatusCode.BadRequest, null, "Invalid ID - must be > 0"));
             }
 
             try
             {
                 var deposit = _db.Get(id);
+
                 if (deposit == null)
                 {
-                    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Deposit not found"));
+                    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Error fetching deposit with id."));
                 }
 
                 var depositDTO = _mapper.Map<DepositDTO>(deposit);
+
                 return Ok(new APIResponse(System.Net.HttpStatusCode.OK, depositDTO, "Success"));
             }
             catch (Exception ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, new APIResponse(System.Net.HttpStatusCode.InternalServerError, null, ex.Message));
+            }
+        }
+
+        [HttpGet("{accountId}/deposits")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public ActionResult<APIResponse> GetAccountDeposits(long accountId)
+        {
+            try
+            {
+                var account = _accountDb.Get(accountId);
+
+                if (account == null)
+                {
+                    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Account not found"));
+                }
+
+                var deposits = _db.GetAll().Where(d => d.AccountId == accountId);
+        
+                if (deposits == null)
+                {
+                    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Account not found"));
+                }
+
+                var depositDTOs = _mapper.Map<List<DepositDTO>>(deposits);
+
+                return Ok(new APIResponse(System.Net.HttpStatusCode.OK, depositDTOs, "Success"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new APIResponse(System.Net.HttpStatusCode.InternalServerError, null, "Error fetching account/deposits: " + ex.Message));
             }
         }
 
@@ -78,7 +112,7 @@ namespace BankAPI.Controllers
         {
             if (depositDTO == null)
             {
-                return BadRequest(new APIResponse(System.Net.HttpStatusCode.BadRequest, null, "Deposit data is null"));
+                return BadRequest(new APIResponse(System.Net.HttpStatusCode.BadRequest, null, "Bad Request: Deposit Data Invalid"));
             }
 
             try
@@ -87,17 +121,18 @@ namespace BankAPI.Controllers
                 var account = _accountDb.Get(accountId);
                 if (account == null)
                 {
-                    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Account not found"));
+                    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Error creating deposit: Account not found"));
                 }
 
                 deposit.AccountId = accountId;
-                account.Balance += deposit.Amount; // Ensure business logic is correct for balance update
+
+                account.Balance += deposit.Amount; 
 
                 _db.Create(deposit);
                 _db.Save();
                 _accountDb.Save();
 
-                return CreatedAtRoute("GetDeposit", new { id = deposit.Id }, new APIResponse(System.Net.HttpStatusCode.Created, _mapper.Map<DepositDTO>(deposit), "Deposit created successfully"));
+                return CreatedAtRoute("GetDeposit", new { id = deposit.Id }, new APIResponse(System.Net.HttpStatusCode.Created, _mapper.Map<DepositDTO>(deposit), "Deposit created successfully and Added to Account"));
             }
             catch (Exception ex)
             {
@@ -117,19 +152,24 @@ namespace BankAPI.Controllers
                 return BadRequest(new APIResponse(System.Net.HttpStatusCode.BadRequest, null, "Invalid deposit data"));
             }
 
+            if (depositDTO.Status == TransactionStatus.Completed) {
+
+                return BadRequest(new APIResponse(System.Net.HttpStatusCode.BadRequest, null, "Deposit already complete - cannot be altered."));
+            }
+
             try
             {
                 var deposit = _db.Get(id);
                 if (deposit == null)
                 {
-                    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Deposit not found"));
+                    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Deposit ID does not exist"));
                 }
 
                 _mapper.Map(depositDTO, deposit);
                 _db.Update(deposit);
                 _db.Save();
 
-                return Ok(new APIResponse(System.Net.HttpStatusCode.OK, _mapper.Map<DepositDTO>(deposit), "Deposit updated successfully"));
+                return Ok(new APIResponse(System.Net.HttpStatusCode.OK, _mapper.Map<DepositDTO>(deposit), "Accepted deposit modification"));
             }
             catch (Exception ex)
             {
@@ -139,6 +179,7 @@ namespace BankAPI.Controllers
 
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -149,13 +190,13 @@ namespace BankAPI.Controllers
                 var deposit = _db.Get(id);
                 if (deposit == null)
                 {
-                    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Deposit not found"));
+                    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "This id does not exist in deposits"));
                 }
 
                 _db.Remove(deposit);
                 _db.Save();
 
-                return Ok(new APIResponse(System.Net.HttpStatusCode.OK, null, "Deposit deleted successfully"));
+                return NoContent();
             }
             catch (Exception ex)
             {
