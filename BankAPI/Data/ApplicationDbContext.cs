@@ -27,7 +27,10 @@ namespace BankAPI.Data
         {
    
             modelBuilder.Entity<Customer>()
-                .HasMany(c => c.Address);
+                            .HasMany(customer => customer.Address)
+                            .WithOne(address => address.Customer)
+                            .HasForeignKey(address => address.CustomerId)
+                            .OnDelete(DeleteBehavior.Cascade); //
 
             modelBuilder.Entity<Account>()
                 .HasOne(a => a.Customer)

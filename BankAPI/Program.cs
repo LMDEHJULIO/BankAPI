@@ -5,6 +5,7 @@ using BankAPI.Repository.IRepository;
 using IBM.Data.DB2.Core;
 using IBM.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddLogging(loggingBuilder =>
