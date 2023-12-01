@@ -33,7 +33,8 @@ builder.Services.AddScoped<IP2PRepository,P2PRepository>();
 
 // Services 
 
-//builder.Services.AddScoped<CustomerService>();
+builder.Services.AddScoped<CustomerService>();
+//builder.Services.AddScoped<ICustomerService>();
 
 
 //builder.Services.AddDbContext<ApplicationDbContext>(options =>

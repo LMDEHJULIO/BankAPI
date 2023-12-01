@@ -9,14 +9,14 @@ using System.Linq;
 namespace BankAPI.Services
 {
 
-    public class CustomerService
+    public class CustomerService : TestService<Customer, CustomerCreateDTO, CustomerDTO>
     {
         private readonly ICustomerRepository _customerRepository;
         private readonly IAccountRepository _accountRepository;
         private readonly IMapper _mapper;
         private readonly ILogger<CustomerService> _logger;
 
-        public CustomerService(ICustomerRepository customerRepository, IAccountRepository accountRepository, IMapper mapper, ILogger<CustomerService> logger)
+        public CustomerService(ICustomerRepository customerRepository, IAccountRepository accountRepository, IMapper mapper, ILogger<CustomerService> logger) : base(customerRepository, mapper, logger)
         {
             _customerRepository = customerRepository;
             _accountRepository = accountRepository;
@@ -25,45 +25,47 @@ namespace BankAPI.Services
         }
 
 
-        public IEnumerable<Customer> GetCustomers()
-        {
-            try
-            {
-                return _customerRepository.GetAll(c => c.Address);
-            } catch (Exception ex)
-            {
-                _logger.LogError("Error retrieving all customers" + ex.Message);
-                throw;
-            }
-        }
+        //public IEnumerable<Customer> GetCustomers()
+        //{
+        //    try
+        //    {
+        //        return _customerRepository.GetAll(c => c.Address);
+        //    } catch (Exception ex)
+        //    {
+        //        _logger.LogError("Error retrieving all customers" + ex.Message);
+        //        throw;
+        //    }
+        //}
 
-        public Customer GetCustomer(int id)
-        {
-            try
-            {
-                return _customerRepository.Get(id, c => c.Address);
-            } catch (Exception ex)
-            {
-                _logger.LogError("Error retreiving customer" + ex.Message);
-                throw;
-            }
-        }
+        //public Customer GetCustomer(int id)
+        //{
+        //    try
+        //    {
+        //        return _customerRepository.Get(id, c => c.Address);
+        //    } catch (Exception ex)
+        //    {
+        //        _logger.LogError("Error retreiving customer" + ex.Message);
+        //        throw;
+        //    }
+        //}
 
         public IEnumerable<AccountDTO> GetCustomerAccounts(int customerId)
         {
-            try { 
+            try
+            {
                 var customer = _customerRepository.Get(customerId);
-                
-                if(customer == null)
+
+                if (customer == null)
                 {
-                    return null; 
+                    return null;
                 }
 
                 var accounts = _accountRepository.GetAll().Where(a => a.Id == customerId);
 
                 return _mapper.Map<List<AccountDTO>>(accounts);
 
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 _logger.LogError("Error fetching accounts: " + ex.Message);
 
@@ -72,45 +74,45 @@ namespace BankAPI.Services
             }
         }
 
-        public Customer CreateCustomer(CustomerCreateDTO customerDTO)
-        {
-            try
-            {
-                var customer = _mapper.Map<Customer>(customerDTO);
-                _customerRepository.Create(customer);
-                _customerRepository.Save();
+        //public Customer CreateCustomer(CustomerCreateDTO customerDTO)
+        //{
+        //    try
+        //    {
+        //        var customer = _mapper.Map<Customer>(customerDTO);
+        //        _customerRepository.Create(customer);
+        //        _customerRepository.Save();
 
-                return customer;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Error creating customer: " + ex.Message);
-                throw;
-            }
-        }
+        //        return customer;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError("Error creating customer: " + ex.Message);
+        //        throw;
+        //    }
+        //}
 
-        public bool DeleteCustomer(int id)
-        {
-            try
-            {
-                var customer = _customerRepository.Get(id);
+        //public bool DeleteCustomer(int id)
+        //{
+        //    try
+        //    {
+        //        var customer = _customerRepository.Get(id);
 
-                if (customer == null)
-                {
-                    return false;
-                }
+        //        if (customer == null)
+        //        {
+        //            return false;
+        //        }
 
-                _customerRepository.Remove(customer);
-                _customerRepository.Save();
+        //        _customerRepository.Remove(customer);
+        //        _customerRepository.Save();
 
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Error deleting customer: " + ex.Message);
-                throw;
-            }
-        }
+        //        return true;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError("Error deleting customer: " + ex.Message);
+        //        throw;
+        //    }
+        //}
 
         public Customer UpdateCustomer(int id, CustomerDTO customerDTO)
         {
