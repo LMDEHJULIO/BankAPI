@@ -114,29 +114,29 @@ namespace BankAPI.Services
         //    }
         //}
 
-        public Customer UpdateCustomer(int id, CustomerDTO customerDTO)
-        {
-            try
-            {
-                var editCustomer = _customerRepository.Get(id);
+        //public Customer UpdateCustomer(int id, CustomerDTO customerDTO)
+        //{
+        //    try
+        //    {
+        //        var editCustomer = _customerRepository.Get(id);
 
-                if (editCustomer == null)
-                {
-                    return null;
-                }
+        //        if (editCustomer == null)
+        //        {
+        //            return null;
+        //        }
 
-                _mapper.Map(customerDTO, editCustomer);
-                _customerRepository.Update(editCustomer);
-                _customerRepository.Save();
+        //        _mapper.Map(customerDTO, editCustomer);
+        //        _customerRepository.Update(editCustomer);
+        //        _customerRepository.Save();
 
-                return editCustomer;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Error updating customer: " + ex.Message);
-                throw;
-            }
-        }
+        //        return editCustomer;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError("Error updating customer: " + ex.Message);
+        //        throw;
+        //    }
+        //}
 
 
     }

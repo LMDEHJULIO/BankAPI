@@ -1,4 +1,7 @@
 ﻿using AutoMapper;
+using BankAPI.Models.Dto;
+using BankAPI.Models;
+using BankAPI.Repository;
 using BankAPI.Repository.IRepository;
 using System.Linq.Expressions;
 
@@ -83,6 +86,29 @@ namespace BankAPI.Services
         //        throw;
         //    }
         //}
+
+        public virtual bool Update(int id, TUpdateDTO updateDTO) { 
+            try
+            {
+                var entity = _repository.Get(id); 
+                if(entity == null)
+                {
+                    return false; 
+                }
+
+                _mapper.Map(updateDTO, entity);
+                _repository.Update(entity);
+                _repository.Save();
+
+                return true;
+
+            } catch (Exception ex)
+            {
+                _logger.LogError($"Error updating {typeof(TEntity).Name}: {ex.Message}");
+                throw; 
+            }
+        }
+        
 
         public virtual bool Delete(int id)
         {

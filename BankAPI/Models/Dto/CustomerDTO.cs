@@ -13,6 +13,6 @@ namespace BankAPI.Models.Dto
 
         public ICollection<AddressDTO> Address { get; set; } 
 
-        public DateTime CreatedDate { get; set; }
+        //public DateTime CreatedDate { get; set; }
     }
 }

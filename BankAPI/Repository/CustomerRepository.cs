@@ -14,10 +14,10 @@ namespace BankAPI.Repository
             _db = db;
         }
 
-        public void Update(Customer entity)
-        {
-            _db.Update(entity);
-            _db.SaveChanges();
-        }
+        //public void Update(Customer entity)
+        //{
+        //    _db.Update(entity);
+        //    _db.SaveChanges();
+        //}
     }
 }

@@ -17,6 +17,8 @@ namespace BankAPI.Repository.IRepository
 
         void Create(T entity); 
 
+        void Update(T entity);
+
         void Remove(T entity);
 
         bool Save();

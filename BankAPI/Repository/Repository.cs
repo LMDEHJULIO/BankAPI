@@ -83,10 +83,11 @@ namespace BankAPI.Repository
             Save();
         }
 
-        //public void Update(T entity)
-        //{
-        //    dbSet.Update(entity);
-        //}
+        public void Update(T entity)
+        {
+            dbSet.Update(entity);
+            Save();
+        }
 
 
 

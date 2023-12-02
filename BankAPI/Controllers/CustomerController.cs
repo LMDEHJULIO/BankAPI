@@ -42,9 +42,9 @@ namespace BankAPI.Controller
         {
             try
             {
-                //IEnumerable<Customer> customers = _customerService.GetCustomers();
+   
                 IEnumerable<Customer> customers = _customerService.GetAll(c => c.Address);
-                //IEnumerable<Customer> customers = _db.GetAll(c => c.Address);
+    
                 _logger.LogInformation("Retrieved all customers");
                 return new APIResponse(System.Net.HttpStatusCode.OK, customers, "Success");
             }
@@ -70,8 +70,7 @@ namespace BankAPI.Controller
 
             try
             {
-                //var customer = _db.Get(id, c => c.Address);
-                //var customer = _customerService.GetCustomer(id);
+     
                 var customer = _customerService.GetById(id, c => c.Address);
 
                 if (customer == null)
@@ -97,19 +96,8 @@ namespace BankAPI.Controller
         {
             try
             {
-                //var customer = _db.Get(customerId);
-                //var customer = _customerService.GetCustomer(customerId);
 
-                //var accountDTOs = _customerService.GetCustomerAccounts(customerId);
                 var accountDTOs = _customerService.GetCustomerAccounts(customerId);
-
-                //if (customer == null)
-                //{
-                //    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Error fetching customer's accounts"));
-                //}
-
-                //var accounts = _accountDb.GetAll().Where(a => a.CustomerId == customerId).ToList();
-                //var accountDTOs = _mapper.Map<List<AccountDTO>>(accounts);
 
                 return Ok(new APIResponse(System.Net.HttpStatusCode.OK, accountDTOs, "Success"));
             }
@@ -132,10 +120,7 @@ namespace BankAPI.Controller
 
             try
             {
-                //Customer customer = _mapper.Map<Customer>(customerDTO);
-                //_db.Create(customer);
-                //_db.Save();
-                //var customer = _customerService.CreateCustomer(customerDTO);
+
                 var customer = _mapper.Map < Customer >(_customerService.Create<CustomerCreateDTO>(customerDTO));
 
                 return CreatedAtRoute("GetCustomer", new { id = customer.Id }, new APIResponse(System.Net.HttpStatusCode.Created, customer, "Customer created successfully"));
@@ -161,15 +146,9 @@ namespace BankAPI.Controller
 
             try
             {
-                //var customer = _customerService.GetCustomer(id);
-                //if (customer == null)
-                //{
-                //    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Customer not found"));
-                //}
 
-                //_customerService.DeleteCustomer(id);
                 _customerService.Delete(id);
-                //_db.Save();
+        
 
                 return NoContent();
             }
@@ -193,19 +172,10 @@ namespace BankAPI.Controller
 
             try
             {
-                //var editCustomer = _db.Get(id);
-                //if (editCustomer == null)
-                //{
-                //    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Customer not found"));
-                //}
 
-                //_mapper.Map(customerDTO, editCustomer);
-                //_db.Update(editCustomer);
-                //_db.Save();
+                var editCustomer = _customerService.Update(id, customerDTO);
 
-                var editCustomer = _customerService.UpdateCustomer(id, customerDTO);
-
-                return Ok(new APIResponse(System.Net.HttpStatusCode.OK, editCustomer, "Customer updated successfully"));
+                return Ok(new APIResponse(System.Net.HttpStatusCode.OK, "Customer updated successfully"));
             }
             catch (Exception ex)
             {
