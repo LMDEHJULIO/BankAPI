@@ -6,6 +6,7 @@ using BankAPI.Models.Dto;
 using BankAPI.Models.Dto.Create;
 using BankAPI.Repository;
 using BankAPI.Repository.IRepository;
+using BankAPI.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -22,13 +23,15 @@ namespace BankAPI.Controller
         private readonly IAccountRepository _accountDb;
         private readonly IMapper _mapper;
         private readonly ILogger<CustomerController> _logger;
+        private readonly CustomerService _customerService;
 
-        public CustomerController(ICustomerRepository db, IAccountRepository accountDb, IMapper mapper, ILogger<CustomerController> logger)
+        public CustomerController(CustomerService customerService, ICustomerRepository db, IAccountRepository accountDb, IMapper mapper, ILogger<CustomerController> logger)
         {
             _db = db;
             _accountDb = accountDb;
             _mapper = mapper;
             _logger = logger;
+            _customerService = customerService;
         }
 
         [HttpGet]
@@ -38,13 +41,14 @@ namespace BankAPI.Controller
         {
             try
             {
-                IEnumerable<Customer> customers = _db.GetAll(c => c.Address);
-                _logger.LogInformation("Retrieved all customers");
+           
+                IEnumerable<Customer> customers = _customerService.GetAllCustomers();
+                
                 return new APIResponse(System.Net.HttpStatusCode.OK, customers, "Success");
             }
             catch (Exception ex)
             {
-                _logger.LogInformation("Error retrieving all customers" + ex.Message);
+            
                 return StatusCode(StatusCodes.Status500InternalServerError, new APIResponse(System.Net.HttpStatusCode.InternalServerError, null, "Error fetching customers: " + ex.Message));
             }
         }
@@ -64,7 +68,8 @@ namespace BankAPI.Controller
 
             try
             {
-                var customer = _db.Get(id, c => c.Address);
+                //var customer = _db.Get(id, c => c.Address);
+                var customer = _customerService.GetCustomerById(id);
                 if (customer == null)
                 {
                     _logger.LogInformation("Invalid customer ID - Customer Not Found");
@@ -94,7 +99,8 @@ namespace BankAPI.Controller
                     return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Error fetching customer's accounts"));
                 }
 
-                var accounts = _accountDb.GetAll().Where(a => a.CustomerId == customerId).ToList();
+                //var accounts = _accountDb.GetAll().Where(a => a.CustomerId == customerId).ToList();
+                var accounts = _customerService.GetCustomerAccounts(customerId);
                 var accountDTOs = _mapper.Map<List<AccountDTO>>(accounts);
 
                 return Ok(new APIResponse(System.Net.HttpStatusCode.OK, accountDTOs, "Success"));
