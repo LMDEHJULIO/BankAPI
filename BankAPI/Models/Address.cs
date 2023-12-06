@@ -25,7 +25,7 @@ namespace BankAPI.Models
         [Required]
         public string Zip { get; set; }
 
-        public int CustomerId { get; set; }
+        public long CustomerId { get; set; }
 
         [JsonIgnore]
         //Navigation property added to allow for cascading deletes

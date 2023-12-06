@@ -37,6 +37,8 @@ namespace BankAPI.Data
                 .WithMany()
                 .HasForeignKey(a => a.CustomerId);
 
+  
+
             modelBuilder.Entity<Account>()
                 .HasMany(a => a.Transactions)
                 .WithOne(t => t.Account)

@@ -2,6 +2,7 @@ using BankAPI.Config;
 using BankAPI.Data;
 using BankAPI.Repository;
 using BankAPI.Repository.IRepository;
+using BankAPI.Services;
 using IBM.Data.DB2.Core;
 using IBM.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -29,6 +30,14 @@ builder.Services.AddScoped<IWithdrawalRepository,WithdrawalRepository>();
 builder.Services.AddScoped<IBillRepository,BillRepository>();
 builder.Services.AddScoped<ITransactionRepository,TransactionRepository>();
 builder.Services.AddScoped<IP2PRepository,P2PRepository>();
+
+
+builder.Services.AddScoped<AccountService>();
+builder.Services.AddScoped<CustomerService>();
+builder.Services.AddScoped<DepositService>();
+builder.Services.AddScoped<WithdrawalService>();
+builder.Services.AddScoped<P2PService>();
+builder.Services.AddScoped<BillService>();
 
 
 

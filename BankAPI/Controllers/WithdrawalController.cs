@@ -3,10 +3,13 @@ using bankapi.models;
 using BankAPI.Data;
 using BankAPI.Models;
 using BankAPI.Models.Dto;
+using BankAPI.Models.Dto.Create;
 using BankAPI.Repository.IRepository;
+using BankAPI.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Net;
 
 namespace BankAPI.Controllers
 {
@@ -18,12 +21,14 @@ namespace BankAPI.Controllers
         private readonly IWithdrawalRepository _db;
         private readonly IAccountRepository _accountDb;
         private readonly IMapper _mapper;
+        private readonly WithdrawalService _withdrawalService;
 
-        public WithdrawalController(IWithdrawalRepository db, IAccountRepository accountDb, IMapper mapper)
+        public WithdrawalController(WithdrawalService withdrawalService, IWithdrawalRepository db, IAccountRepository accountDb, IMapper mapper)
         {
             _db = db;
             _accountDb = accountDb;
             _mapper = mapper;
+            _withdrawalService = withdrawalService;
         }
 
         [HttpGet]
@@ -31,7 +36,8 @@ namespace BankAPI.Controllers
         {
             try
             {
-                var withdrawals = _db.GetAll();
+     
+                var withdrawals = _withdrawalService.GetWithdrawals();
                 var withdrawalDTOs = _mapper.Map<List<WithdrawalDTO>>(withdrawals);
                 return Ok(new APIResponse(System.Net.HttpStatusCode.OK, withdrawalDTOs, "Success"));
             }
@@ -46,18 +52,21 @@ namespace BankAPI.Controllers
         {
             if (id == 0)
             {
-                return BadRequest(new APIResponse(System.Net.HttpStatusCode.BadRequest, null, "Invalid ID"));
+                return BadRequest(new APIResponse(HttpStatusCode.BadRequest, null, "Invalid ID"));
             }
 
             try
             {
-                var withdrawal = _db.Get(id);
+             
+                var withdrawal = _withdrawalService.GetWithdrawal(id);
+
                 if (withdrawal == null)
                 {
                     return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Withdrawal not found"));
                 }
 
                 var withdrawalDTO = _mapper.Map<WithdrawalDTO>(withdrawal);
+
                 return Ok(new APIResponse(System.Net.HttpStatusCode.OK, withdrawalDTO, "Success"));
             }
             catch (Exception ex)
@@ -81,7 +90,7 @@ namespace BankAPI.Controllers
                     return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Account not found"));
                 }
 
-                var withdrawals = _db.GetAll().Where(d => d.AccountId == accountId);
+                var withdrawals = _withdrawalService.GetAccountWithdrawals(accountId);
 
                 if (withdrawals == null)
                 {
@@ -99,7 +108,7 @@ namespace BankAPI.Controllers
         }
 
         [HttpPost("accounts/{accountId}/withdrawals")]
-        public ActionResult<APIResponse> CreateWithdrawal([FromBody] WithdrawalDTO withdrawalDTO, long accountId)
+        public ActionResult<APIResponse> CreateWithdrawal([FromBody] WithdrawalCreateDTO withdrawalDTO, long accountId)
         {
             if (withdrawalDTO == null)
             {
@@ -110,6 +119,7 @@ namespace BankAPI.Controllers
             {
                 var withdrawal = _mapper.Map<Withdrawal>(withdrawalDTO);
                 var account = _accountDb.Get(accountId);
+
                 if (account == null)
                 {
                     return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Account not found"));
@@ -117,21 +127,7 @@ namespace BankAPI.Controllers
 
                 withdrawal.AccountId = accountId;
 
-                //account.Balance -= withdrawal.Amount; 
-
-                if (withdrawal.Medium == Medium.Balance)
-                {
-                    account.Balance -= withdrawal.Amount;
-                }
-
-                if (withdrawal.Medium == Medium.Rewards)
-                {
-                    account.Rewards -= (int)withdrawal.Amount;
-                }
-
-                _db.Create(withdrawal);
-                _db.Save();
-                _accountDb.Save();
+                _withdrawalService.CreateWithdrawal(withdrawal, accountId);
 
                 return CreatedAtRoute("GetWithdrawal", new { id = withdrawal.Id }, new APIResponse(System.Net.HttpStatusCode.Created, _mapper.Map<WithdrawalDTO>(withdrawal), "Withdrawal created successfully"));
             }
@@ -146,22 +142,19 @@ namespace BankAPI.Controllers
         {
             if (withdrawalDTO == null)
             {
-                return BadRequest(new APIResponse(System.Net.HttpStatusCode.BadRequest, null, "Invalid withdrawal data"));
+                return BadRequest(new APIResponse(System.Net.HttpStatusCode.BadRequest, "Invalid withdrawal data"));
             }
 
             try
             {
-                var withdrawal = _db.Get(id);
-                if (withdrawal == null)
+                var updatedWithdrawal = _withdrawalService.UpdateWithdrawal(id, _mapper.Map<Withdrawal>(withdrawalDTO));
+
+                if (updatedWithdrawal == null)
                 {
-                    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Withdrawal not found"));
+                    return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, "Withdrawal not found"));
                 }
 
-                _mapper.Map(withdrawalDTO, withdrawal);
-                _db.Update(withdrawal);
-                _db.Save();
-
-                return Ok(new APIResponse(System.Net.HttpStatusCode.OK, _mapper.Map<WithdrawalDTO>(withdrawal), "Withdrawal updated successfully"));
+                return Ok(new APIResponse(System.Net.HttpStatusCode.OK, _mapper.Map<WithdrawalDTO>(updatedWithdrawal), "Withdrawal updated successfully"));
             }
             catch (Exception ex)
             {
@@ -175,13 +168,13 @@ namespace BankAPI.Controllers
             try
             {
                 var withdrawal = _db.Get(id);
+
                 if (withdrawal == null)
                 {
                     return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Withdrawal not found"));
                 }
 
-                _db.Remove(withdrawal);
-                _db.Save();
+                _withdrawalService.DeleteWithdrawal(id);
 
                 return NoContent();
             }

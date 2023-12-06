@@ -3,7 +3,9 @@ using bankapi.models;
 using BankAPI.Data;
 using BankAPI.Models;
 using BankAPI.Models.Dto;
+using BankAPI.Models.Dto.Update;
 using BankAPI.Repository.IRepository;
+using BankAPI.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,12 +18,14 @@ namespace BankAPI.Controllers
         private readonly IDepositRepository _db;
         private readonly IAccountRepository _accountDb;
         private readonly IMapper _mapper;
+        private readonly DepositService _depositService;
 
-        public DepositController(IDepositRepository db, IAccountRepository accountDb, IMapper mapper)
+        public DepositController(DepositService depositService, IDepositRepository db, IAccountRepository accountDb, IMapper mapper)
         {
             _db = db;
             _accountDb = accountDb;
             _mapper = mapper;
+            _depositService = depositService;
         }
 
         [HttpGet]
@@ -29,9 +33,10 @@ namespace BankAPI.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public ActionResult<APIResponse> GetDeposits()
         {
-            try
-            {
-                var deposits = _db.GetAll().Where(d => d.Type == TransactionType.Deposit);
+            try { 
+            //{
+            //    var deposits = _db.GetAll().Where(d => d.Type == TransactionType.Deposit);
+                var deposits = _depositService.GetDeposits();
                 var depositDTOs = _mapper.Map<List<DepositDTO>>(deposits);
                 return Ok(new APIResponse(System.Net.HttpStatusCode.OK, depositDTOs, "Success"));
             }
@@ -55,7 +60,8 @@ namespace BankAPI.Controllers
 
             try
             {
-                var deposit = _db.Get(id);
+                //var deposit = _db.Get(id);
+                var deposit = _depositService.GetDeposit(id);
 
                 if (deposit == null)
                 {
@@ -87,7 +93,8 @@ namespace BankAPI.Controllers
                     return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Account not found"));
                 }
 
-                var deposits = _db.GetAll().Where(d => d.AccountId == accountId);
+                //var deposits = _db.GetAll().Where(d => d.AccountId == accountId);
+                var deposits = _depositService.GetAccountDeposits(accountId);
         
                 if (deposits == null)
                 {
@@ -126,19 +133,8 @@ namespace BankAPI.Controllers
 
                 deposit.AccountId = accountId;
 
-                if (deposit.Medium == Medium.Balance) {
-                    account.Balance += deposit.Amount;
-                }
-
-                if(deposit.Medium == Medium.Rewards)
-                {
-                    account.Rewards += (int)deposit.Amount;
-                }
-
-                _db.Create(deposit);
-                _db.Save();
-                _accountDb.Save();
-
+                _depositService.CreateDeposit(deposit, accountId);
+         
                 return CreatedAtRoute("GetDeposit", new { id = deposit.Id }, new APIResponse(System.Net.HttpStatusCode.Created, _mapper.Map<DepositDTO>(deposit), "Deposit created successfully and Added to Account"));
             }
             catch (Exception ex)
@@ -152,7 +148,7 @@ namespace BankAPI.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public ActionResult<APIResponse> UpdateDeposit(long id, [FromBody] DepositDTO depositDTO)
+        public ActionResult<APIResponse> UpdateDeposit(long id, [FromBody] DepositUpdateDTO depositDTO)
         {
             if (depositDTO == null)
             {
@@ -166,21 +162,22 @@ namespace BankAPI.Controllers
 
             try
             {
-                var deposit = _db.Get(id);
+                var deposit = _depositService.GetDeposit(id);
                 if (deposit == null)
                 {
                     return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Deposit ID does not exist"));
                 }
 
                 _mapper.Map(depositDTO, deposit);
-                _db.Update(deposit);
-                _db.Save();
+                //_db.Update(deposit);
+                _depositService.UpdateDeposit(id, deposit);
+                //_db.Save();
 
-                return Ok(new APIResponse(System.Net.HttpStatusCode.OK, _mapper.Map<DepositDTO>(deposit), "Accepted deposit modification"));
+                return Ok(new APIResponse(System.Net.HttpStatusCode.NoContent, _mapper.Map<DepositDTO>(deposit), "Accepted deposit modification"));
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new APIResponse(System.Net.HttpStatusCode.InternalServerError, null, "Error updating deposit: " + ex.Message));
+                return StatusCode(StatusCodes.Status500InternalServerError, new APIResponse(System.Net.HttpStatusCode.InternalServerError, "Error updating deposit: " + ex.Message));
             }
         }
 
@@ -194,16 +191,16 @@ namespace BankAPI.Controllers
         {
             try
             {
-                var deposit = _db.Get(id);
+             
+                var deposit = _depositService.GetDeposit(id);
                 if (deposit == null)
                 {
                     return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "This id does not exist in deposits"));
                 }
 
-                _db.Remove(deposit);
-                _db.Save();
+                _depositService.DeleteDeposit(id);
 
-                return NoContent();
+                return Ok(new APIResponse(System.Net.HttpStatusCode.NoContent, "Deposit successfully deleted"));
             }
             catch (Exception ex)
             {

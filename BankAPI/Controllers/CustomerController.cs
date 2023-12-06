@@ -6,6 +6,7 @@ using BankAPI.Models.Dto;
 using BankAPI.Models.Dto.Create;
 using BankAPI.Repository;
 using BankAPI.Repository.IRepository;
+using BankAPI.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -22,13 +23,18 @@ namespace BankAPI.Controller
         private readonly IAccountRepository _accountDb;
         private readonly IMapper _mapper;
         private readonly ILogger<CustomerController> _logger;
+        private readonly CustomerService _customerService;
+        private readonly AccountService _accountService;
 
-        public CustomerController(ICustomerRepository db, IAccountRepository accountDb, IMapper mapper, ILogger<CustomerController> logger)
+
+        public CustomerController(CustomerService customerService, AccountService accountService, ICustomerRepository db, IAccountRepository accountDb, IMapper mapper, ILogger<CustomerController> logger)
         {
             _db = db;
             _accountDb = accountDb;
             _mapper = mapper;
             _logger = logger;
+            _customerService = customerService;
+            _accountService = accountService;
         }
 
         [HttpGet]
@@ -38,7 +44,8 @@ namespace BankAPI.Controller
         {
             try
             {
-                IEnumerable<Customer> customers = _db.GetAll(c => c.Address);
+
+                IEnumerable<Customer> customers = _customerService.GetAllCustomers();
                 _logger.LogInformation("Retrieved all customers");
                 return new APIResponse(System.Net.HttpStatusCode.OK, customers, "Success");
             }
@@ -54,17 +61,20 @@ namespace BankAPI.Controller
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public ActionResult<APIResponse> GetCustomer(int id)
+        public ActionResult<APIResponse> GetCustomer(long id)
         {
             if (id == 0)
             {
                 _logger.LogInformation("Error retrieving customer - ID must be greater than 0");
+
                 return BadRequest(new APIResponse(System.Net.HttpStatusCode.BadRequest, null, "Invalid ID"));
             }
 
             try
             {
-                var customer = _db.Get(id, c => c.Address);
+          
+                var customer = _customerService.GetCustomer(id);
+
                 if (customer == null)
                 {
                     _logger.LogInformation("Invalid customer ID - Customer Not Found");
@@ -84,17 +94,21 @@ namespace BankAPI.Controller
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public ActionResult<APIResponse> GetCustomerAccounts(int customerId)
+        public ActionResult<APIResponse> GetCustomerAccounts(long customerId)
         {
             try
             {
-                var customer = _db.Get(customerId);
+            
+                var customer = _customerService.GetCustomer(customerId);
+
                 if (customer == null)
                 {
                     return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Error fetching customer's accounts"));
                 }
 
-                var accounts = _accountDb.GetAll().Where(a => a.CustomerId == customerId).ToList();
+                var accounts = _accountService.GetAllAccounts().Where(a => a.CustomerId == customerId);
+         
+
                 var accountDTOs = _mapper.Map<List<AccountDTO>>(accounts);
 
                 return Ok(new APIResponse(System.Net.HttpStatusCode.OK, accountDTOs, "Success"));
@@ -119,8 +133,9 @@ namespace BankAPI.Controller
             try
             {
                 Customer customer = _mapper.Map<Customer>(customerDTO);
-                _db.Create(customer);
-                _db.Save();
+        
+
+                _customerService.CreateCustomer(customer);
 
                 return CreatedAtRoute("GetCustomer", new { id = customer.Id }, new APIResponse(System.Net.HttpStatusCode.Created, customer, "Customer created successfully"));
             }
@@ -136,7 +151,7 @@ namespace BankAPI.Controller
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
 
-        public ActionResult<APIResponse> DeleteCustomer(int id)
+        public ActionResult<APIResponse> DeleteCustomer(long id)
         {
             if (id == 0)
             {
@@ -145,14 +160,15 @@ namespace BankAPI.Controller
 
             try
             {
-                var customer = _db.Get(id);
+                var customer = _customerService.GetCustomer(id);
+
                 if (customer == null)
                 {
                     return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Customer not found"));
                 }
+         
 
-                _db.Remove(customer);
-                _db.Save();
+                _customerService.DeleteCustomer(id);
 
                 return NoContent();
             }
@@ -167,7 +183,7 @@ namespace BankAPI.Controller
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public ActionResult<APIResponse> UpdateCustomer(int id, [FromBody] CustomerDTO customerDTO)
+        public ActionResult<APIResponse> UpdateCustomer(long id, [FromBody] CustomerDTO customerDTO)
         {
             if (id <= 0 || customerDTO == null)
             {
@@ -176,15 +192,16 @@ namespace BankAPI.Controller
 
             try
             {
-                var editCustomer = _db.Get(id);
+                var editCustomer = _customerService.GetCustomer(id);
+
                 if (editCustomer == null)
                 {
                     return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Customer not found"));
                 }
 
                 _mapper.Map(customerDTO, editCustomer);
-                _db.Update(editCustomer);
-                _db.Save();
+        
+                _customerService.UpdateCustomer(id, editCustomer);
 
                 return Ok(new APIResponse(System.Net.HttpStatusCode.OK, editCustomer, "Customer updated successfully"));
             }

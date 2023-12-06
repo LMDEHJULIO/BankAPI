@@ -5,7 +5,7 @@ namespace BankAPI.Models.Dto
 {
     public class CustomerDTO
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
 
         public string FirstName { get; set; }
 

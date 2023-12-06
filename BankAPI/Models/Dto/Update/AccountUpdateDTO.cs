@@ -1,6 +1,6 @@
-﻿namespace BankAPI.Models.Dto
+﻿namespace BankAPI.Models.Dto.Update
 {
-    public class AccountDTO
+    public class AccountUpdateDTO
     {
         public long Id { get; set; }
         public Type Type { get; set; }
@@ -11,8 +11,8 @@
 
         public double Balance { get; set; }
 
-        //public long CustomerId { get; set; }
+        public long CustomerId { get; set; }
 
-        public Customer Customer { get; set; }
+        //public Customer Customer { get; set; }
     }
 }

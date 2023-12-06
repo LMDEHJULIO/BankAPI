@@ -40,42 +40,5 @@ namespace BankAPI.Controllers
             }
         }
 
-
-        //[ProducesResponseType(StatusCodes.Status200OK)]
-        //[HttpPost("accounts/{accountId}/transaction")]
-        //public ActionResult<Transaction> CreateTransaction([FromBody] TransactionDTO transactionDTO, long accountId) {
-
-        //    var transaction = _mapper.Map<Transaction>(transactionDTO);
-
-        //    if (transaction == null)
-        //    {
-
-        //        return BadRequest();
-        //    }
-
-        //    if (transaction.Id > 0)
-        //    {
-        //        return StatusCode(StatusCodes.Status500InternalServerError);
-        //    }
-
-        //    var account = _accountDb.Get(accountId);
-
-        //    account.Balance += transaction.Amount;
-
-        //    if (account == null)
-        //    {
-        //        return NotFound("Account not Found");
-        //    }
-
-        //    transaction.AccountId = accountId;
-
-        //    _db.Create(transaction);
-
-        //    _db.Save();
-        //    _accountDb.Save();
-
-        //    return CreatedAtRoute("GetDeposit", new { id = transaction.Id }, transaction);
-        //}
-
     }
 }

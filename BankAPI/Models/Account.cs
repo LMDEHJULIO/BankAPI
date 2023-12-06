@@ -24,7 +24,7 @@ namespace BankAPI.Models
         public double Balance { get; set; }
 
      
-        public int CustomerId { get; set; }
+        public long CustomerId { get; set; }
 
         [JsonIgnore]
         public virtual ICollection<Transaction> Transactions { get; set; }

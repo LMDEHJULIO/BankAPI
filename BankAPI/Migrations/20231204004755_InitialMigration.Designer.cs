@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BankAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20231128130848_AddRecipientID")]
-    partial class AddRecipientID
+    [Migration("20231204004755_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -36,8 +36,8 @@ namespace BankAPI.Migrations
                     b.Property<double>("Balance")
                         .HasColumnType("float");
 
-                    b.Property<int>("CustomerId")
-                        .HasColumnType("int");
+                    b.Property<long>("CustomerId")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("NickName")
                         .IsRequired()
@@ -68,8 +68,8 @@ namespace BankAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("CustomerId")
-                        .HasColumnType("int");
+                    b.Property<long>("CustomerId")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("State")
                         .IsRequired()
@@ -143,11 +143,11 @@ namespace BankAPI.Migrations
 
             modelBuilder.Entity("BankAPI.Models.Customer", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("bigint");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<string>("FirstName")
                         .IsRequired()
@@ -182,9 +182,8 @@ namespace BankAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Medium")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("Medium")
+                        .HasColumnType("int");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
@@ -250,9 +249,13 @@ namespace BankAPI.Migrations
 
             modelBuilder.Entity("BankAPI.Models.Address", b =>
                 {
-                    b.HasOne("BankAPI.Models.Customer", null)
+                    b.HasOne("BankAPI.Models.Customer", "Customer")
                         .WithMany("Address")
-                        .HasForeignKey("CustomerId");
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
                 });
 
             modelBuilder.Entity("BankAPI.Models.Bill", b =>

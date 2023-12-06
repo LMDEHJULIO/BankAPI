@@ -34,7 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Models\Dto\Update\" />
+    <Folder Include="Migrations\" />
     <Folder Include="Response\" />
     <Folder Include="Services\NewFolder\" />
   </ItemGroup>

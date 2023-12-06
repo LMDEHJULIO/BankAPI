@@ -4,6 +4,8 @@ using BankAPI.Models;
 using BankAPI.Repository.IRepository;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http.HttpResults;
+using BankAPI.Services;
+using BankAPI.Models.Dto.Update;
 
 namespace BankAPI.Controllers
 {
@@ -15,12 +17,18 @@ namespace BankAPI.Controllers
         private readonly IP2PRepository _db;
         private readonly IAccountRepository _accountDb;
         private readonly IMapper _mapper;
+        private readonly P2PService _p2pService;
+        private readonly AccountService _accountService;
+        private readonly IMapper _mapper2;
 
-        public P2PController(IP2PRepository db, IAccountRepository accountDb, IMapper mapper)
+        public P2PController(P2PService p2pService, AccountService accountService, IP2PRepository db, IAccountRepository accountDb, IMapper mapper)
         {
             _db = db;
             _accountDb = accountDb;
             _mapper = mapper;
+            _p2pService = p2pService;
+            _accountService = accountService;
+            _accountService = accountService;
         }
 
         [HttpGet]
@@ -28,7 +36,8 @@ namespace BankAPI.Controllers
         {
             try
             {
-                var p2pTransactions = _db.GetAll().Where(d => d.Type == TransactionType.P2P);
+            
+                var p2pTransactions = _p2pService.GetAllP2P();
                 var p2pDTOs = _mapper.Map<List<P2PDTO>>(p2pTransactions);
                 return Ok(new APIResponse(System.Net.HttpStatusCode.OK, p2pDTOs, "Success"));
             }
@@ -49,8 +58,10 @@ namespace BankAPI.Controllers
             try
             {
                 var p2p = _mapper.Map<P2P>(p2pDTO);
-                var account = _accountDb.Get(accountId);
-                var recipientAccount = _accountDb.Get(p2pDTO.RecipientID);
+                
+                var account = _accountService.GetAccountById(accountId);
+
+                var recipientAccount = _accountService.GetAccountById(p2pDTO.RecipientID);
 
                 if (account == null)
                 {
@@ -61,22 +72,9 @@ namespace BankAPI.Controllers
                     return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "Recipient Account not found"));
                 }
 
-                if (p2p.Medium == Medium.Balance)
-                {
-                    account.Balance -= p2p.Amount;
-                }
-
-                    if (p2p.Medium == Medium.Rewards)
-                {
-                    account.Rewards -= (int)p2p.Amount;
-                }
-
-                recipientAccount.Balance += p2p.Amount;
-
                 p2p.AccountId = accountId;
-                _db.Create(p2p);
-                _db.Save();
-                _accountDb.Save();
+
+                _p2pService.CreateP2P(p2p, accountId, p2pDTO.RecipientID);
 
                 return CreatedAtAction(nameof(GetP2PById), new { id = p2p.Id }, new APIResponse(System.Net.HttpStatusCode.Created, _mapper.Map<P2PDTO>(p2p), "P2P transaction created successfully"));
             }
@@ -91,7 +89,8 @@ namespace BankAPI.Controllers
         {
             try
             {
-                var p2p = _db.Get(id);
+                var p2p = _p2pService.GetP2PById(id);
+
                 if (p2p == null)
                 {
                     return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "P2P transaction not found"));
@@ -107,7 +106,7 @@ namespace BankAPI.Controllers
         }
 
         [HttpPut("{id}")]
-        public ActionResult<APIResponse> UpdateP2P(long id, [FromBody] P2PDTO p2pDTO)
+        public ActionResult<APIResponse> UpdateP2P(long id, [FromBody] P2PUpdateDTO p2pDTO)
         {
             if (p2pDTO == null)
             {
@@ -116,7 +115,9 @@ namespace BankAPI.Controllers
 
             try
             {
-                var p2p = _db.Get(id);
+                var updateP2P = _mapper.Map<P2P>(p2pDTO);
+
+                var p2p = _p2pService.GetP2PById(id);
 
 
                 if (p2p == null)
@@ -125,8 +126,9 @@ namespace BankAPI.Controllers
                 }
 
                 _mapper.Map(p2pDTO, p2p);
-                _db.Update(p2p);
-                _db.Save();
+                _mapper.Map(p2pDTO, p2p);
+
+                _p2pService.UpdateP2P(id, p2p);
 
                 return Ok(new APIResponse(System.Net.HttpStatusCode.OK, _mapper.Map<P2PDTO>(p2p), "P2P transaction updated successfully"));
             }
@@ -141,14 +143,14 @@ namespace BankAPI.Controllers
         {
             try
             {
-                var p2p = _db.Get(id);
+                var p2p = _p2pService.GetP2PById(id);
+
                 if (p2p == null)
                 {
                     return NotFound(new APIResponse(System.Net.HttpStatusCode.NotFound, null, "P2P transaction not found"));
                 }
 
-                _db.Remove(p2p);
-                _db.Save();
+                _p2pService.DeleteP2P(id);
 
                 return NoContent();
             }
